@@ -1,0 +1,7 @@
+ourventure-flask/venv/
+venv
+venv/*
+
+ourventure-vue/node_modules/
+node_modules
+node_modules/*
