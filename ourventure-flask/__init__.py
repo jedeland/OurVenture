@@ -10,6 +10,9 @@ app = Flask(__name__)
 @app.route("/region", methods=["GET", "POST"])
 def initialise_region():
     print("Creating region")
+    #To create a region, x many classes should be declared
+    #A region needs an economy, a few organisations / guilds, an assortment of NPC's, 
+    # Quests and Town details like stores, culture and ruler classes
     return "Got Region"
 
 
