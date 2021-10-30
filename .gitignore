@@ -1,6 +1,9 @@
 ourventure-flask/venv/
 venv
 venv/*
+__pycache__/
+*.py[cod]
+
 
 ourventure-vue/node_modules/
 node_modules

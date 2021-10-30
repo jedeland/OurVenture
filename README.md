@@ -19,7 +19,7 @@
 
 Useful Resources
 
-> For The Backend
+For The Backend
 
 > Flask: https://flask.palletsprojects.com/en/2.0.x/ 
 
@@ -30,7 +30,7 @@ Useful Resources
 > MySQL: https://dev.mysql.com/doc/ 
 
 
-> For The Frontend
+For The Frontend
 
 > CSS: https://developer.mozilla.org/en-US/docs/Web/CSS
 
