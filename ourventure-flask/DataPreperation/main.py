@@ -20,7 +20,7 @@ def read_wikipedia():
         #print("Section is : ", sec.text)
         sec = list(map(int, re.findall("\d+", sec.text)))
         if max(sec) > 50 and "unisex" not in i.a.text.lower():
-            print(i)
+            print(i.a.text, max(sec))
         else:
             print("\n")
         #print(sec)
