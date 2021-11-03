@@ -2,16 +2,19 @@ import sqlite3
 from bs4 import BeautifulSoup
 import os
 import re
-import pprint
+from pprint import pprint
 import json
 import requests
 
 
 def read_wikipedia():
     #https://en.wikipedia.org/wiki/Category:Feminine_given_names
-    urls = ["https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language"]
+    urls = ["https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language",
+            "https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language"]
+    viable_links = {urls[0]: [], urls[1]: [], urls[2]: [], urls[3]: []}
     for url in urls:
         print(url)
+        print(viable_links)
         html = requests.get(url)
         soup = BeautifulSoup(html.text, "html.parser")
         # Returns all subcategory names on wikipedia, need to extract names (e.g. <a title="Category:Vietnamese" extract the cultural name)
@@ -22,10 +25,13 @@ def read_wikipedia():
             #print("Section is : ", sec.text)
             sec = list(map(int, re.findall("\d+", sec.text)))
             if max(sec) > 50 and "unisex" not in i.a.text.lower():
-                print(i.a.text.lower(), max(sec))
-                
+                #print(i.a.text.lower(), max(sec))
+                viable_links[url].append(i.a.text.lower().replace("-language", ""))
+                #viable_links.append(i.a.text.lower().replace("-language", ""))
+                #TODO: replace with dict
             #print(sec)
-            
+    print(viable_links)
+    print(viable_links[urls[3]][-3])        
     return soup
     
 
