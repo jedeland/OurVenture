@@ -7,8 +7,10 @@ import json
 import requests
 
 
-def read_wikipedia():
-    #https://en.wikipedia.org/wiki/Category:Feminine_given_names
+def get_name_targets():
+    # This function reads wikipedia and wiktionary, it then looks for valid name categories (ones with more than 50 results) and passes them to a list.
+    # This list is then returned to main, and added to the next function which reads every category for the names within
+    # https://en.wikipedia.org/wiki/Category:Feminine_given_names
     urls = ["https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language",
             "https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language"]
     viable_links = {urls[0]: [], urls[1]: [], urls[2]: [], urls[3]: []}
@@ -24,16 +26,19 @@ def read_wikipedia():
             sec = i.find("span", {"dir": "ltr"})
             #print("Section is : ", sec.text)
             sec = list(map(int, re.findall("\d+", sec.text)))
-            if max(sec) > 50 and "unisex" not in i.a.text.lower():
+            if max(sec) > 55 and "unisex" not in i.a.text.lower():
                 #print(i.a.text.lower(), max(sec))
                 viable_links[url].append(i.a.text.lower().replace("-language", ""))
                 #viable_links.append(i.a.text.lower().replace("-language", ""))
                 #TODO: replace with dict
             #print(sec)
-    print(viable_links)
+    pprint(viable_links, width=120, compact=True, sort_dicts=False)
     print(viable_links[urls[3]][-3])        
-    return soup
+    return viable_links
     
+def read_targets(values):
+    print("Looping over values, looking for names")
+
 
 def read_wiktionary():
     url = "https://en.wiktionary.org"
@@ -46,5 +51,6 @@ def read_wiktionary():
 if __name__ == '__main__':
     # The BS4 code should read over the wikipedia entries, the wiktionary entries, and one other entry
     # Reads wikipedia into json or df object
-    wikipedia_values = read_wikipedia()
+    name_values = get_name_targets()
+    output_values = read_targets(values=name_values)
     #print(wikipedia_values)
