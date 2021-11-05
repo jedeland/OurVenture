@@ -28,6 +28,16 @@ def get_name_targets():
             sec = list(map(int, re.findall("\d+", sec.text)))
             if max(sec) > 55 and "unisex" not in i.a.text.lower():
                 #print(i.a.text.lower(), max(sec))
+                print(i.a)
+                print(url)
+                print(url.find(".org"))
+                max_url = url.find(".org") + 4
+                print(max_url)
+                print(url[0:max_url])
+                start_text = url[0:max_url]
+                print(i.a["href"])
+                end_text = start_text + i.a["href"]
+                print(end_text)
                 viable_links[url].append(i.a.text.lower().replace("-language", ""))
                 #viable_links.append(i.a.text.lower().replace("-language", ""))
                 #TODO: replace with dict
