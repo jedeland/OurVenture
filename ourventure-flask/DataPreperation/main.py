@@ -67,13 +67,17 @@ if __name__ == '__main__':
     start = time.time()
     name_values = get_name_targets()
     print(name_values)
-    for v in name_values:
-        if "feminine" in v.lower() or "female" in v.lower():
-            print(v)
-            get_female_values()
-        elif "masculine" in v.lower() or "male" in v.lower():
-            print(v)
-            get_male_values()
+    #TODO: Split list before for loop
+    female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
+    male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
+    print(female_list, "\n\n\n", male_list)
+    # for v in name_values:
+    #     if "feminine" in v.lower() or "female" in v.lower():
+    #         print(v)
+    #         get_female_values()
+    #     elif "masculine" in v.lower() or "male" in v.lower():
+    #         print(v)
+    #         get_male_values()
     print(f"Time taken to read targets ... {time.time() - start} ")
     output_values = read_targets(values=name_values)
     #print(wikipedia_values)
