@@ -48,6 +48,7 @@ def read_targets(values):
     
 
 def get_female_values(female_list):
+    #TODO: get names from the soup followed in this list
     for f in female_list:
         html = requests.get(f)
         soup = BeautifulSoup(html.text, "html.parser")
@@ -55,9 +56,14 @@ def get_female_values(female_list):
         if "next page" in section.text:
             #TODO: add way to follow down the pages
             links = section.find("a", string="next page")
-            print(links)
+            #print(links)
             #print(f"{section}: {f})")
             #print(f)
+        else:
+            print(f"Single page can be read!: {f}")
+            names = section.find_all("li")
+            print(names[-1].text)
+
     return "list"
 
 def get_male_values(male_list):
