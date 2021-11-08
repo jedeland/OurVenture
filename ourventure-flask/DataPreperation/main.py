@@ -52,6 +52,11 @@ def read_wiktionary():
     url = "https://en.wiktionary.org"
     print()
 
+def get_female_values():
+    print()
+
+def get_male_values():
+    print()
 
 
 
@@ -61,6 +66,14 @@ if __name__ == '__main__':
     # Reads wikipedia into json or df object
     start = time.time()
     name_values = get_name_targets()
+    print(name_values)
+    for v in name_values:
+        if "feminine" in v.lower() or "female" in v.lower():
+            print(v)
+            get_female_values()
+        elif "masculine" in v.lower() or "male" in v.lower():
+            print(v)
+            get_male_values()
     print(f"Time taken to read targets ... {time.time() - start} ")
     output_values = read_targets(values=name_values)
     #print(wikipedia_values)
