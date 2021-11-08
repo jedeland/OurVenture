@@ -47,17 +47,23 @@ def read_targets(values):
     print("Looping over values, looking for names")
     
 
+def get_female_values(female_list):
+    for f in female_list:
+        html = requests.get(f)
+        soup = BeautifulSoup(html.text, "html.parser")
+        section = soup.find("div", {"id": "mw-pages"})
+        if "next page" in section.text:
+            #TODO: add way to follow down the pages
+            links = section.find("a", string="next page")
+            print(links)
+            #print(f"{section}: {f})")
+            #print(f)
+    return "list"
 
-def read_wiktionary():
-    url = "https://en.wiktionary.org"
-    print()
-
-def get_female_values():
-    print()
-
-def get_male_values():
-    print()
-
+def get_male_values(male_list):
+    for m in male_list:
+        print(m)
+    return "list"
 
 
 
@@ -66,18 +72,16 @@ if __name__ == '__main__':
     # Reads wikipedia into json or df object
     start = time.time()
     name_values = get_name_targets()
-    print(name_values)
-    #TODO: Split list before for loop
+    # print(name_values)
+    #Split list before for loop
     female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
     male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
-    print(female_list, "\n\n\n", male_list)
-    # for v in name_values:
-    #     if "feminine" in v.lower() or "female" in v.lower():
-    #         print(v)
-    #         get_female_values()
-    #     elif "masculine" in v.lower() or "male" in v.lower():
-    #         print(v)
-    #         get_male_values()
+    
+    # print(female_list, "\n\n\n", male_list)
+
+    female_vals = get_female_values(female_list)
+    male_vals = get_male_values(male_list)
+
     print(f"Time taken to read targets ... {time.time() - start} ")
     output_values = read_targets(values=name_values)
     #print(wikipedia_values)
