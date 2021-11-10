@@ -59,7 +59,6 @@ def get_female_values(female_list):
         #TODO: Refactor me to look nicer
         origin = re.findall(r"^(.*?)_", f.lower().replace("old_", "").replace("high_", "").replace("langauge_", "").split(":")[-1])[0]
         print(origin.capitalize())
-        test_data["name_values"].update({origin: []})
 
         section = soup.find("div", {"id": "mw-pages"})
         if "next page" in section.text:
@@ -69,6 +68,7 @@ def get_female_values(female_list):
             #print(f"{section}: {f})")
             #print(f)
         else:
+            test_data["name_values"].update({origin: []})
             print(f"Single page can be read!: {f}")
             names = section.find_all("li")
             for name in names:
@@ -77,12 +77,13 @@ def get_female_values(female_list):
                 female_data["name_values"].append({"name": name.text.split(" ")[0], "gender": "female", "origin": origin})
                 
             print(names[-1].text.split(" ")[0])
-            if origin == "spanish":
-                print("On spanish")
-                print(f)
-                time.sleep(4)
-                pprint(test_data["name_values"][origin])
-                
+            # if origin == "spanish":
+            #     print("On spanish")
+            #     print(f)
+            #     time.sleep(4)
+            #     pprint(test_data["name_values"][origin])
+            #     time.sleep(4)
+
                 
             print(type(names))
     pprint(female_data)
@@ -112,6 +113,6 @@ if __name__ == '__main__':
     male_vals = get_male_values(male_list)
 
     print(f"Time taken to read targets ... {time.time() - start} ")
-    pprint(female_vals)
+    pprint(female_vals["name_values"]["spanish"])
     output_values = read_targets(values=name_values)
     #print(wikipedia_values)
