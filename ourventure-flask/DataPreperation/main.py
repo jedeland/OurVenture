@@ -68,7 +68,10 @@ def get_female_values(female_list):
             #print(f"{section}: {f})")
             #print(f)
         else:
-            test_data["name_values"].update({origin: []})
+            if origin in test_data["name_values"].keys():
+                print("Name already exists, not overwriting past data")
+            else:
+                test_data["name_values"].update({origin: []})
             print(f"Single page can be read!: {f}")
             names = section.find_all("li")
             for name in names:
