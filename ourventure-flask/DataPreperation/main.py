@@ -61,7 +61,9 @@ def get_name_values(gender_arg, list_arg):
         section = soup.find("div", {"id": "mw-pages"})
         if "next page" in section.text:
             #TODO: add way to follow down the pages
-            links = section.find("a", string="next page")
+            next_link = section.find("a", string="next page")
+            print(val, next_link)
+            search_multiple_pages(val, next_link["href"])
         else:
             if origin in name_data["name_values"].keys():
                 print("Name already exists, not overwriting past data")
@@ -75,6 +77,11 @@ def get_name_values(gender_arg, list_arg):
     return name_data            
     
 
+def search_multiple_pages(url, href_link):
+    # This function searches through all "next pages" that are found for certain values,
+    href_link = re.sub(r'&amp;', r'&', href_link)
+    formed_url = f"{url.split('.org')[0]}.org/{href_link}"
+    print(formed_url)
 
 def get_female_values(female_list):
     #TODO: get names from the soup followed in this list
@@ -93,6 +100,7 @@ def get_female_values(female_list):
         if "next page" in section.text:
             #TODO: add way to follow down the pages
             links = section.find("a", string="next page")
+            print(links)
         else:
             if origin in test_data["name_values"].keys():
                 print("Name already exists, not overwriting past data")
@@ -137,7 +145,7 @@ if __name__ == '__main__':
     male_vals = get_name_values("male", male_list)
 
     print(f"Time taken to read targets ... {time.time() - start} ")
-    pprint(female_vals["name_values"]["spanish"])
-    pprint(male_vals["name_values"]["spanish"])
+    # pprint(female_vals["name_values"]["spanish"])
+    # pprint(male_vals["name_values"]["spanish"])
     output_values = read_targets(values=name_values)
     #print(wikipedia_values)
