@@ -46,6 +46,35 @@ def get_name_targets():
 def read_targets(values):
     print("Looping over values, looking for names")
     
+def get_name_values(gender_arg, list_arg):
+    name_data = {"name_values": {}}
+    
+    for val in list_arg:
+        html = requests.get(val)
+        soup = BeautifulSoup(html.text, "html.parser")
+        
+        # print(f.split(":", 1)[-1])
+        #TODO: Refactor me to look nicer
+        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("langauge_", "").split(":")[-1])[0]
+        print(origin.capitalize())
+
+        section = soup.find("div", {"id": "mw-pages"})
+        if "next page" in section.text:
+            #TODO: add way to follow down the pages
+            links = section.find("a", string="next page")
+        else:
+            if origin in name_data["name_values"].keys():
+                print("Name already exists, not overwriting past data")
+            else:
+                name_data["name_values"].update({origin: []})
+            print(f"Single page can be read!: {val}")
+            names = section.find_all("li")
+            for name in names:
+                #print()
+                name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})
+    return name_data            
+    
+
 
 def get_female_values(female_list):
     #TODO: get names from the soup followed in this list
@@ -64,9 +93,6 @@ def get_female_values(female_list):
         if "next page" in section.text:
             #TODO: add way to follow down the pages
             links = section.find("a", string="next page")
-            #print(links)
-            #print(f"{section}: {f})")
-            #print(f)
         else:
             if origin in test_data["name_values"].keys():
                 print("Name already exists, not overwriting past data")
@@ -80,12 +106,6 @@ def get_female_values(female_list):
                 female_data["name_values"].append({"name": name.text.split(" ")[0], "gender": "female", "origin": origin})
                 
             print(names[-1].text.split(" ")[0])
-            # if origin == "spanish":
-            #     print("On spanish")
-            #     print(f)
-            #     time.sleep(4)
-            #     pprint(test_data["name_values"][origin])
-            #     time.sleep(4)
 
                 
             print(type(names))
@@ -112,10 +132,10 @@ if __name__ == '__main__':
     
     # print(female_list, "\n\n\n", male_list)
 
-    female_vals = get_female_values(female_list)
+    female_vals = get_name_values("female" , female_list)
     male_vals = get_male_values(male_list)
 
     print(f"Time taken to read targets ... {time.time() - start} ")
-    pprint(female_vals["name_values"]["spanish"])
+    print(female_vals["name_values"]["spanish"])
     output_values = read_targets(values=name_values)
     #print(wikipedia_values)
