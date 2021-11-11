@@ -13,7 +13,7 @@ def get_name_targets():
     # This list is then returned to main, and added to the next function which reads every category for the names within
     # https://en.wikipedia.org/wiki/Category:Feminine_given_names
     urls = ["https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language",
-            "https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language"]
+            "https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language", "https://en.wiktionary.org/w/index.php?title=Category:Male_given_names_by_language&subcatfrom=Rwanda-Rundi%0ARwanda-Rundi+male+given+names#mw-subcategories"]
     #viable_links = {urls[0]: [], urls[1]: [], urls[2]: [], urls[3]: []}
     viable_links = []
     for url in urls:
@@ -130,12 +130,14 @@ if __name__ == '__main__':
     female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
     male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
     
+    
     # print(female_list, "\n\n\n", male_list)
 
     female_vals = get_name_values("female" , female_list)
-    male_vals = get_male_values(male_list)
+    male_vals = get_name_values("male", male_list)
 
     print(f"Time taken to read targets ... {time.time() - start} ")
-    print(female_vals["name_values"]["spanish"])
+    pprint(female_vals["name_values"]["spanish"])
+    pprint(male_vals["name_values"]["spanish"])
     output_values = read_targets(values=name_values)
     #print(wikipedia_values)
