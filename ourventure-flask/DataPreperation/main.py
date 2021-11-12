@@ -63,6 +63,7 @@ def get_name_values(gender_arg, list_arg):
             #TODO: add way to follow down the pages
             next_link = section.find("a", string="next page")
             print(val, next_link)
+            assign_names(gender_arg, name_data, origin, section)
             search_multiple_pages(val, next_link["href"])
         else:
             if origin in name_data["name_values"].keys():
@@ -70,11 +71,14 @@ def get_name_values(gender_arg, list_arg):
             else:
                 name_data["name_values"].update({origin: []})
             print(f"Single page can be read!: {val}")
-            names = section.find_all("li")
-            for name in names:
+            assign_names(gender_arg, name_data, origin, section)
+    return name_data 
+
+def assign_names(gender_arg, name_data, origin, section):
+    names = section.find_all("li")
+    for name in names:
                 #print()
-                name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})
-    return name_data            
+        name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})           
     
 
 def search_multiple_pages(url, href_link):
