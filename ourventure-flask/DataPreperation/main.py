@@ -15,35 +15,40 @@ def get_name_targets():
     urls = ["https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language",
             "https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language", "https://en.wiktionary.org/w/index.php?title=Category:Male_given_names_by_language&subcatfrom=Rwanda-Rundi%0ARwanda-Rundi+male+given+names#mw-subcategories"]
     #viable_links = {urls[0]: [], urls[1]: [], urls[2]: [], urls[3]: []}
+    # List of viable links found in each URL page
     viable_links = []
     for url in urls:
-        #print(url)
-        #print(viable_links)
+        # Gets a HTML Object of the url for processing
         html = requests.get(url)
+        # Beatiful soup processes the html objects text value, allowing us to use BeatifulSoup class functions to search through it
         soup = BeautifulSoup(html.text, "html.parser")
+        # Used to create new URLs found from the next page section, slices the url value from start, up until the .org section eg: https://en.wikipedia.org
         start_text = url[0:url.find(".org") + 4]
+
         # Returns all subcategory names on wikipedia, need to extract names (e.g. <a title="Category:Vietnamese" extract the cultural name)
         section = soup.find("div", {"id": "mw-subcategories"}).findAll("div", {"class": "CategoryTreeItem"})
-        print("Section type is : ", type(section))
+        # print("Section type is : ", type(section))
+        # Looping over found sections from the soup.findAll call (all divs with class CategoryTreeItem)
         for i in section:
+            # Assign section by finding span
             sec = i.find("span", {"dir": "ltr"})
             #print("Section is : ", sec.text)
+            # Use regex to produce a list of values that are digits in the section text, this returns the value which states how many names exist >
+            # eg: 21 c, 734 e
             sec = list(map(int, re.findall("\d+", sec.text)))
+            # Checks max sec value (usually the number of elements or "e"), skips unisex
             if max(sec) > 55 and "unisex" not in i.a.text.lower():
-                #print(i.a.text.lower(), max(sec))
+                # Create url string using the start text and the link to the section
                 final_text = start_text + i.a["href"]
-                #print(final_text)
+                # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
-                #viable_links[url].append(i.a.text.lower().replace("-language", ""))
-                #viable_links.append(i.a.text.lower().replace("-language", ""))
-                #TODO: replace with dict
-            #print(sec)
-    #pprint(viable_links, width=120, compact=True, sort_dicts=False)
-    #print(viable_links)
-    print(viable_links[-3])        
+
+    print("Example: ", viable_links[-3])        
+    # Export end value to main function
     return viable_links
     
 def read_targets(values):
+    # Dummy function
     print("Looping over values, looking for names")
     
 def get_name_values(gender_arg, list_arg):
