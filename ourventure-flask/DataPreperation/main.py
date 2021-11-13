@@ -125,10 +125,6 @@ def get_female_values(female_list):
 
     return test_data
 
-def get_male_values(male_list):
-    for m in male_list:
-        print(m)
-    return "list"
 
 
 
