@@ -7,7 +7,6 @@ from pprint import pprint
 import json
 import requests
 
-
 def get_name_targets():
     # This function reads wikipedia and wiktionary, it then looks for valid name categories (ones with more than 50 results) and passes them to a list.
     # This list is then returned to main, and added to the next function which reads every category for the names within
@@ -50,7 +49,7 @@ def get_name_targets():
 def read_targets(values):
     # Dummy function
     print("Looping over values, looking for names")
-    
+      
 def get_name_values(gender_arg, list_arg):
     name_data = {"name_values": {}}
     
@@ -66,31 +65,59 @@ def get_name_values(gender_arg, list_arg):
         section = soup.find("div", {"id": "mw-pages"})
         if "next page" in section.text:
             #TODO: add way to follow down the pages
+            configure_name_data(name_data, origin)
+            
             next_link = section.find("a", string="next page")
             print(val, next_link)
-            assign_names(gender_arg, name_data, origin, section)
-            search_multiple_pages(val, next_link["href"])
+            
+            assign_names(gender_arg, name_data, origin, section, val)
+            
+            recursive_search(gender_arg, name_data, val, origin, next_link)
+                    
         else:
-            if origin in name_data["name_values"].keys():
-                print("Name already exists, not overwriting past data")
-            else:
-                name_data["name_values"].update({origin: []})
+            configure_name_data(name_data, origin)
             print(f"Single page can be read!: {val}")
-            assign_names(gender_arg, name_data, origin, section)
+            assign_names(gender_arg, name_data, origin, section, val)
     return name_data 
+def recursive_search(gender_arg, name_data, val, origin, next_link):
+    if next_link:
+        last_url = re.sub(r'&amp;', r'&', next_link["href"])
+        new_page = get_soup(val, next_link["href"])
+        if "next page" in new_page.text:
+            next_link = new_page.find("a", string="next page")
+            if next_link:
+                # Read names into object
+                assign_names(gender_arg, name_data, origin, new_page, last_url)
+                # Call function again using new link
+                recursive_search(gender_arg, name_data, val, origin, next_link)
+            else:
+                print(f"Last page {last_url}")
+                assign_names(gender_arg, name_data, origin, new_page, last_url)
+                    
 
-def assign_names(gender_arg, name_data, origin, section):
+def configure_name_data(name_data, origin):
+    if origin in name_data["name_values"].keys():
+        print("Name already exists, not overwriting past data")
+    else:
+        name_data["name_values"].update({origin: []})
+
+def assign_names(gender_arg, name_data, origin, section, assigned_from):
     names = section.find_all("li")
     for name in names:
                 #print()
-        name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})           
+        name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin, "location": assigned_from})           
     
 
-def search_multiple_pages(url, href_link):
+def get_soup(url, href_link):
     # This function searches through all "next pages" that are found for certain values,
     href_link = re.sub(r'&amp;', r'&', href_link)
-    formed_url = f"{url.split('.org')[0]}.org/{href_link}"
+    formed_url = f"{url.split('.org')[0]}.org{href_link}"
     print(formed_url)
+    html = requests.get(formed_url)
+    soup = BeautifulSoup(html.text, "html.parser")
+    section = soup.find("div", {"id": "mw-pages"})
+    return section
+
 
 def get_female_values(female_list):
     #TODO: get names from the soup followed in this list
@@ -131,12 +158,11 @@ def get_female_values(female_list):
     return test_data
 
 
-
-
 if __name__ == '__main__':
     # The BS4 code should read over the wikipedia entries, the wiktionary entries, and one other entry
     # Reads wikipedia into json or df object
     start = time.time()
+    # Reads name values and outputs a list
     name_values = get_name_targets()
     # print(name_values)
     #Split list before for loop
@@ -150,7 +176,7 @@ if __name__ == '__main__':
     male_vals = get_name_values("male", male_list)
 
     print(f"Time taken to read targets ... {time.time() - start} ")
-    # pprint(female_vals["name_values"]["spanish"])
-    # pprint(male_vals["name_values"]["spanish"])
+    pprint(female_vals["name_values"]["spanish"])
+    pprint(male_vals["name_values"]["spanish"])
     output_values = read_targets(values=name_values)
-    #print(wikipedia_values)
+    
