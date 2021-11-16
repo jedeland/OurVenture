@@ -46,9 +46,15 @@ def get_name_targets():
     # Export end value to main function
     return viable_links
     
-def read_targets(values):
+def read_targets(female, male):
     # Dummy function
     print("Looping over values, looking for names")
+    try:
+        combined_dict = {key: female[key] + (male[key]) for key in female["name_values"]}
+    except:
+        pass
+    print(combined_dict["name_values"]["spanish"])
+    return combined_dict
       
 def get_name_values(gender_arg, list_arg):
     name_data = {"name_values": {}}
@@ -174,9 +180,11 @@ if __name__ == '__main__':
 
     female_vals = get_name_values("female" , female_list)
     male_vals = get_name_values("male", male_list)
+    #TODO: add last names here
 
     print(f"Time taken to read targets ... {time.time() - start} ")
     pprint(female_vals["name_values"]["spanish"])
     pprint(male_vals["name_values"]["spanish"])
-    output_values = read_targets(values=name_values)
+    # Create json object, and combine dicts 
+    output_values = read_targets(female_vals, male_vals)
     
