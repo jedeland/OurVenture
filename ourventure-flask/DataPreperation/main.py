@@ -11,9 +11,10 @@ def get_name_targets():
     # This function reads wikipedia and wiktionary, it then looks for valid name categories (ones with more than 50 results) and passes them to a list.
     # This list is then returned to main, and added to the next function which reads every category for the names within
     # https://en.wikipedia.org/wiki/Category:Feminine_given_names
-    urls = ["https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language",
-            "https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language", "https://en.wiktionary.org/w/index.php?title=Category:Male_given_names_by_language&subcatfrom=Rwanda-Rundi%0ARwanda-Rundi+male+given+names#mw-subcategories"]
-    #viable_links = {urls[0]: [], urls[1]: [], urls[2]: [], urls[3]: []}
+    urls = ["https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language", 
+    "https://en.wiktionary.org/w/index.php?title=Category:Male_given_names_by_language&subcatfrom=Rwanda-Rundi%0ARwanda-Rundi+male+given+names#mw-subcategories",
+    "https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language"]
+    
     # List of viable links found in each URL page
     viable_links = []
     for url in urls:
@@ -41,19 +42,30 @@ def get_name_targets():
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
+            elif i.a.text.lower() in viable_links and max(sec) > 20:
+                final_text = start_text + i.a["href"]
+                # Add link text to viable_links list for processing later
+                viable_links.append(final_text)
 
     print("Example: ", viable_links[-3])        
     # Export end value to main function
     return viable_links
     
-def read_targets(female, male):
+def read_targets(female, male, last_names):
     # Dummy function
     print("Looping over values, looking for names")
-    try:
-        combined_dict = {key: female[key] + (male[key]) for key in female["name_values"]}
-    except:
-        pass
-    print(combined_dict["name_values"]["spanish"])
+    combined_dict = {}
+
+    print(female["name_values"].keys(), male["name_values"].keys())
+    outliers = set(list(female["name_values"].keys())) ^ set(list(male["name_values"].keys()))
+    print(outliers)
+    print(len(outliers))
+    if len(outliers) == 0:
+        print("No outliers found!")
+        for x in female["name_values"].keys():
+            combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x]]})
+    print("Combined Dict!")                
+    # print(combined_dict["name_values"]["spanish"])
     return combined_dict
       
 def get_name_values(gender_arg, list_arg):
@@ -65,7 +77,7 @@ def get_name_values(gender_arg, list_arg):
         
         # print(f.split(":", 1)[-1])
         #TODO: Refactor me to look nicer
-        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("langauge_", "").split(":")[-1])[0]
+        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("langauge_", "").replace("-language", "").split(":")[-1])[0]
         print(origin.capitalize())
 
         section = soup.find("div", {"id": "mw-pages"})
@@ -186,5 +198,5 @@ if __name__ == '__main__':
     pprint(female_vals["name_values"]["spanish"])
     pprint(male_vals["name_values"]["spanish"])
     # Create json object, and combine dicts 
-    output_values = read_targets(female_vals, male_vals)
+    output_values = read_targets(female_vals, male_vals, "last_names")
     
