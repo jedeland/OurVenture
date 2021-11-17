@@ -47,25 +47,34 @@ def get_name_targets():
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
 
-    print("Example: ", viable_links[-3])        
+    # print("Example: ", viable_links[-3])        
     # Export end value to main function
     return viable_links
     
 def read_targets(female, male, last_names):
     # Dummy function
-    print("Looping over values, looking for names")
+    print("Looping over values, combining dicts")
+    # Init dict
     combined_dict = {}
 
-    print(female["name_values"].keys(), male["name_values"].keys())
+    # print(female["name_values"].keys(), male["name_values"].keys())
+    # Get values that dont exist in both lists, aka naughty values
     outliers = set(list(female["name_values"].keys())) ^ set(list(male["name_values"].keys()))
-    print(outliers)
-    print(len(outliers))
+    # print(outliers)
+    # print(len(outliers))
     if len(outliers) == 0:
         print("No outliers found!")
         for x in female["name_values"].keys():
             combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x]]})
-    print("Combined Dict!")                
-    # print(combined_dict["name_values"]["spanish"])
+    else:
+        # Loop over locations in female, as female has less values on wikipedia / wiktionary it should be smaller
+        for x in female["name_values"].keys():
+            # If x is in the naughty list, we skip it
+            if x not in outliers:
+                # Update the dictionary with a literal list using the * operator
+                combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x]]})
+    # print("Combined Dict!")                
+    # print(combined_dict["spanish"])
     return combined_dict
       
 def get_name_values(gender_arg, list_arg):
