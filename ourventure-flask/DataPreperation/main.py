@@ -6,6 +6,7 @@ import time
 from pprint import pprint
 import json
 import requests
+from functools import cache
 
 def get_name_targets():
     # This function reads wikipedia and wiktionary, it then looks for valid name categories (ones with more than 50 results) and passes them to a list.
@@ -13,7 +14,8 @@ def get_name_targets():
     # https://en.wikipedia.org/wiki/Category:Feminine_given_names
     urls = ["https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language", 
     "https://en.wiktionary.org/w/index.php?title=Category:Male_given_names_by_language&subcatfrom=Rwanda-Rundi%0ARwanda-Rundi+male+given+names#mw-subcategories",
-    "https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language"]
+    "https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language",
+    "https://en.wikipedia.org/wiki/Category:Surnames_by_language", "https://en.wiktionary.org/wiki/Category:Surnames_by_language"]
     
     # List of viable links found in each URL page
     viable_links = []
@@ -29,6 +31,7 @@ def get_name_targets():
         section = soup.find("div", {"id": "mw-subcategories"}).findAll("div", {"class": "CategoryTreeItem"})
         # print("Section type is : ", type(section))
         # Looping over found sections from the soup.findAll call (all divs with class CategoryTreeItem)
+
         for i in section:
             # Assign section by finding span
             sec = i.find("span", {"dir": "ltr"})
@@ -37,15 +40,22 @@ def get_name_targets():
             # eg: 21 c, 734 e
             sec = list(map(int, re.findall("\d+", sec.text)))
             # Checks max sec value (usually the number of elements or "e"), skips unisex
+            # TODO: fix the checks for line 54
+            # print(i.a.text.capitalize().split()[0], " value")
+            # if i.a.text.lower().split()[0] == "korean":
+            #     print(viable_links)
+            # print(i.a.text.capitalize().split()[0] in viable_links)
+            
             if max(sec) > 55 and "unisex" not in i.a.text.lower():
                 # Create url string using the start text and the link to the section
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
-            elif i.a.text.lower() in viable_links and max(sec) > 20:
+            elif i.a.text.lower().split(" ")[0] in viable_links and max(sec) > 20:
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
+        print(viable_links[-1])
 
     # print("Example: ", viable_links[-3])        
     # Export end value to main function
@@ -59,20 +69,33 @@ def read_targets(female, male, last_names):
 
     # print(female["name_values"].keys(), male["name_values"].keys())
     # Get values that dont exist in both lists, aka naughty values
-    outliers = set(list(female["name_values"].keys())) ^ set(list(male["name_values"].keys()))
-    # print(outliers)
-    # print(len(outliers))
-    if len(outliers) == 0:
-        print("No outliers found!")
-        for x in female["name_values"].keys():
-            combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x]]})
-    else:
+    outliers = set(list(female["name_values"].keys())) ^ set(list(male["name_values"].keys())) ^ set(list(last_names["name_values"].keys()))
+    print(outliers)
+    print(len(outliers))
+    print("_"*20 + "\n"*2)
+    print(sorted(list(female["name_values"].keys())))
+    print("_"*20 + "\n"*2)
+    print(sorted(list(male["name_values"].keys())))
+    print("_"*20 + "\n"*2)
+    print(sorted(list(last_names["name_values"].keys())))
+
+
+    # This line below looks very complicated, it first maps out a the lists into sets, this is then extracted using the * operator, the function set.intersection is then used
+    # To find values that exist in all 3 sets, and this is then converted to a list which is stored in shared values
+    shared_values = list(set.intersection(*map(set, [list(female["name_values"].keys()), list(male["name_values"].keys()), list(last_names["name_values"].keys())])))
+    print(sorted(shared_values))
+    print(len(shared_values))
+    # if len(outliers) == 0:
+    #     print("No outliers found!")
+    #     for x in female["name_values"].keys():
+    #         combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x], *last_names["name_values"][x]]})
+    # else:
         # Loop over locations in female, as female has less values on wikipedia / wiktionary it should be smaller
-        for x in female["name_values"].keys():
-            # If x is in the naughty list, we skip it
-            if x not in outliers:
-                # Update the dictionary with a literal list using the * operator
-                combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x]]})
+    for x in shared_values:
+        # If x is in the naughty list, we skip it
+        print(x)
+        # Update the dictionary with a literal list using the * operator
+        combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x], *last_names["name_values"][x]]})
     # print("Combined Dict!")                
     # print(combined_dict["spanish"])
     return combined_dict
@@ -81,8 +104,7 @@ def get_name_values(gender_arg, list_arg):
     name_data = {"name_values": {}}
     
     for val in list_arg:
-        html = requests.get(val)
-        soup = BeautifulSoup(html.text, "html.parser")
+        soup = get_name_soup(val)
         
         # print(f.split(":", 1)[-1])
         #TODO: Refactor me to look nicer
@@ -106,6 +128,13 @@ def get_name_values(gender_arg, list_arg):
             print(f"Single page can be read!: {val}")
             assign_names(gender_arg, name_data, origin, section, val)
     return name_data 
+
+@cache
+def get_name_soup(val):
+    html = requests.get(val)
+    soup = BeautifulSoup(html.text, "lxml")
+    return soup
+
 def recursive_search(gender_arg, name_data, val, origin, next_link):
     if next_link:
         last_url = re.sub(r'&amp;', r'&', next_link["href"])
@@ -134,14 +163,14 @@ def assign_names(gender_arg, name_data, origin, section, assigned_from):
                 #print()
         name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin, "location": assigned_from})           
     
-
+@cache
 def get_soup(url, href_link):
     # This function searches through all "next pages" that are found for certain values,
     href_link = re.sub(r'&amp;', r'&', href_link)
     formed_url = f"{url.split('.org')[0]}.org{href_link}"
     print(formed_url)
     html = requests.get(formed_url)
-    soup = BeautifulSoup(html.text, "html.parser")
+    soup = BeautifulSoup(html.text, "lxml")
     section = soup.find("div", {"id": "mw-pages"})
     return section
 
@@ -191,21 +220,25 @@ if __name__ == '__main__':
     start = time.time()
     # Reads name values and outputs a list
     name_values = get_name_targets()
-    # print(name_values)
+    
     #Split list before for loop
     female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
     male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
+    surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
+
+
     
     
     # print(female_list, "\n\n\n", male_list)
 
     female_vals = get_name_values("female" , female_list)
     male_vals = get_name_values("male", male_list)
+    surname_vals = get_name_values("surname", surname_list)
     #TODO: add last names here
 
-    print(f"Time taken to read targets ... {time.time() - start} ")
-    pprint(female_vals["name_values"]["spanish"])
-    pprint(male_vals["name_values"]["spanish"])
+    #print(f"Time taken to read targets ... {time.time() - start} ")
+    #pprint(female_vals["name_values"]["spanish"])
+    #pprint(male_vals["name_values"]["spanish"])
     # Create json object, and combine dicts 
-    output_values = read_targets(female_vals, male_vals, "last_names")
+    output_values = read_targets(female_vals, male_vals, surname_vals)
     
