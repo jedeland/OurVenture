@@ -241,4 +241,6 @@ if __name__ == '__main__':
     #pprint(male_vals["name_values"]["spanish"])
     # Create json object, and combine dicts 
     output_values = read_targets(female_vals, male_vals, surname_vals)
+    with open("./DataCollections/data_preperation_output.json", "w+") as f:
+        json.dump(output_values, f)
     
