@@ -99,12 +99,12 @@ def read_targets(female, male, last_names):
     # print("Combined Dict!")                
     # print(combined_dict["spanish"])
     return combined_dict
-      
+    
 def get_name_values(gender_arg, list_arg):
     name_data = {"name_values": {}}
     
     for val in list_arg:
-        soup = get_name_soup(val)
+        soup = get_soup(val)
         
         # print(f.split(":", 1)[-1])
         #TODO: Refactor me to look nicer
@@ -129,16 +129,28 @@ def get_name_values(gender_arg, list_arg):
             assign_names(gender_arg, name_data, origin, section, val)
     return name_data 
 
+#Header text: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:77.0) Gecko/20100101 Firefox/77.0
+# {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:77.0) Gecko/20100101 Firefox/77.0'}
 @cache
-def get_name_soup(val):
-    html = requests.get(val)
-    soup = BeautifulSoup(html.text, "lxml")
+def get_soup(val):
+    html = requests.get(val, headers={'user-agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:77.0) Gecko/20100101 Firefox/77.0'})
+    soup = BeautifulSoup(html.content, "lxml")
     return soup
+
+@cache
+def get_recursive_soup(url, href_link):
+    # This function searches through all "next pages" that are found for certain values,
+    href_link = re.sub(r'&amp;', r'&', href_link)
+    formed_url = f"{url.split('.org')[0]}.org{href_link}"
+    print(formed_url)
+    soup = get_soup(formed_url)
+    section = soup.find("div", {"id": "mw-pages"})
+    return section
 
 def recursive_search(gender_arg, name_data, val, origin, next_link):
     if next_link:
         last_url = re.sub(r'&amp;', r'&', next_link["href"])
-        new_page = get_soup(val, next_link["href"])
+        new_page = get_recursive_soup(val, next_link["href"])
         if "next page" in new_page.text:
             next_link = new_page.find("a", string="next page")
             if next_link:
@@ -161,19 +173,7 @@ def assign_names(gender_arg, name_data, origin, section, assigned_from):
     names = section.find_all("li")
     for name in names:
                 #print()
-        name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin, "location": assigned_from})           
-    
-@cache
-def get_soup(url, href_link):
-    # This function searches through all "next pages" that are found for certain values,
-    href_link = re.sub(r'&amp;', r'&', href_link)
-    formed_url = f"{url.split('.org')[0]}.org{href_link}"
-    print(formed_url)
-    html = requests.get(formed_url)
-    soup = BeautifulSoup(html.text, "lxml")
-    section = soup.find("div", {"id": "mw-pages"})
-    return section
-
+        name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})  # "location": assigned_from})           
 
 def get_female_values(female_list):
     #TODO: get names from the soup followed in this list
@@ -241,6 +241,6 @@ if __name__ == '__main__':
     #pprint(male_vals["name_values"]["spanish"])
     # Create json object, and combine dicts 
     output_values = read_targets(female_vals, male_vals, surname_vals)
-    with open("./DataCollections/data_preperation_output.json", "w+") as f:
+    with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
         json.dump(output_values, f)
     

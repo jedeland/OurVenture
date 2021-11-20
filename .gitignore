@@ -3,7 +3,7 @@ venv
 venv/*
 __pycache__/
 *.py[cod]
-
+ourventure/ourventure-flask/DataPreperation/DataCollections/*.json
 
 ourventure-vue/node_modules/
 node_modules
