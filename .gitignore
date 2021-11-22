@@ -3,8 +3,8 @@ venv
 venv/*
 __pycache__/
 *.py[cod]
-ourventure/ourventure-flask/DataPreperation/DataCollections/*.json
 
 ourventure-vue/node_modules/
 node_modules
 node_modules/*
+ourventure-flask/DataPreperation/DataCollections/name_collection_output.json
