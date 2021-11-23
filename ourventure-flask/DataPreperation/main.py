@@ -226,30 +226,37 @@ if __name__ == '__main__':
     # The BS4 code should read over the wikipedia entries, the wiktionary entries, and one other entry
     # Reads wikipedia into json or df object
     start = time.time()
-    # Reads name values and outputs a list
-    name_values = get_name_targets()
-    
-    #Split list before for loop
-    female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
-    male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
-    surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
-    
-    
-    # print(female_list, "\n\n\n", male_list)
 
-    female_vals = get_name_values("female" , female_list)
-    male_vals = get_name_values("male", male_list)
-    surname_vals = get_name_values("surname", surname_list)
-    #TODO: add last names here
+    #Remove me if you want to change the data aggregation system
+    if os.path.exists("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"):
+        print()
+    else:
 
-    #print(f"Time taken to read targets ... {time.time() - start} ")
-    time.sleep(2)
-    # Create json object, and combine dicts 
-    output_values = read_targets(female_vals, male_vals, surname_vals)
-    pprint(output_values["spanish"])
-    
-    with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
-        json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
+
+        # Reads name values and outputs a list
+        name_values = get_name_targets()
+        
+        #Split list before for loop
+        female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
+        male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
+        surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
+        
+        
+        # print(female_list, "\n\n\n", male_list)
+
+        female_vals = get_name_values("female" , female_list)
+        male_vals = get_name_values("male", male_list)
+        surname_vals = get_name_values("surname", surname_list)
+        #TODO: add last names here
+
+        #print(f"Time taken to read targets ... {time.time() - start} ")
+        time.sleep(2)
+        # Create json object, and combine dicts 
+        output_values = read_targets(female_vals, male_vals, surname_vals)
+        pprint(output_values["spanish"])
+        
+        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
+            json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
 
     
     print(f"Time taken to read targets ... {time.time() - start} ")    
