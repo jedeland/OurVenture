@@ -4,7 +4,7 @@ venv/*
 __pycache__/
 *.py[cod]
 
-
 ourventure-vue/node_modules/
 node_modules
 node_modules/*
+ourventure-flask/DataPreperation/DataCollections/name_collection_output.json
