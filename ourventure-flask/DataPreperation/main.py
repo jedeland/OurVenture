@@ -221,15 +221,21 @@ def get_female_values(female_list):
 
     return test_data
 
+def transliterate_values(input_dict):
+    print()
+
 
 if __name__ == '__main__':
     # The BS4 code should read over the wikipedia entries, the wiktionary entries, and one other entry
     # Reads wikipedia into json or df object
     start = time.time()
-
+    JSON_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"
     #Remove me if you want to change the data aggregation system
     if os.path.exists("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"):
         print()
+        output_values = json.load(JSON_PATH, ensure_ascii=False)
+        latinized_values = transliterate_values(output_values)
+
     else:
 
 
@@ -257,6 +263,7 @@ if __name__ == '__main__':
         
         with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
             json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
+        latinized_values = transliterate_values(output_values)
 
     
-    print(f"Time taken to read targets ... {time.time() - start} ")    
+    print(f"Time taken to read targets ... {time.time() - start} ")
