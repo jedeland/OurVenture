@@ -231,7 +231,7 @@ def transliterate_values(input_dict):
             #  Change name value to be latin readable, remove leading and trailing whitespace
             #  and replace whitespace with dashes
             #  This search matches to any basic latin, or extended latin letter usages in the right side values
-            if re.search("[A-Za-z\u0000-\u007F\u0080-\u00FF]", sub_dict["name"]):
+            if re.search("[A-Za-z\u0000-\u007F\u0080-\u00FF\u0100-\u017F\u0180-\u024F]", sub_dict["name"]):
                 pass
             else:
                 sub_dict["name"] = unidecode.unidecode_expect_nonascii(sub_dict["name"]).strip().replace(" ", "-")
