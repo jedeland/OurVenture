@@ -221,19 +221,6 @@ def get_female_values(female_list):
 
     return test_data
 
-import unicodedata as ud
-
-latin_letters= {}
-
-def is_latin(uchr):
-    try: 
-        return latin_letters[uchr]
-    except KeyError:
-        return latin_letters.setdefault(uchr, 'LATIN' in ud.name(uchr))
-
-def only_roman_chars(unistr):
-    return all(is_latin(uchr) for uchr in unistr if uchr.isalpha()) # isalpha suggested by John Machin
-
 def transliterate_values(input_dict):
     #Latin-izes unicode values using the library unidecode
     #Extract key value from input dict (argument)
@@ -243,10 +230,8 @@ def transliterate_values(input_dict):
         for sub_dict in v:
             #  Change name value to be latin readable, remove leading and trailing whitespace
             #  and replace whitespace with dashes
-            # else:
-            if re.match(r"^p{L}"):
-                pass
-            if only_roman_chars(sub_dict["name"]):
+            #  This search matches to any basic latin, or extended latin letter usages in the right side values
+            if re.search("[A-Za-z\u0000-\u007F\u0080-\u00FF]", sub_dict["name"]):
                 pass
             else:
                 sub_dict["name"] = unidecode.unidecode_expect_nonascii(sub_dict["name"]).strip().replace(" ", "-")
