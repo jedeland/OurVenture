@@ -229,10 +229,12 @@ if __name__ == '__main__':
     new_data_needed = False
     JSON_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"
     #Remove me if you want to change the data aggregation system
+    print(JSON_PATH)
     if os.path.exists(JSON_PATH) and not new_data_needed:
         print()
         with open(JSON_PATH, encoding='utf-8') as f:
             output_values = json.load(f)
+        print("Got to this stage!")
         latinized_values = transliterate_values(output_values)
 
     else:
