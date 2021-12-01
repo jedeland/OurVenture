@@ -236,6 +236,9 @@ if __name__ == '__main__':
             output_values = json.load(f)
         print("Got to this stage!")
         latinized_values = transliterate_values(output_values)
+        print(latinized_values.keys())
+        print(latinized_values["arabic"])
+        pprint(latinized_values["persian"])
 
     else:
 

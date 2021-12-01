@@ -1,12 +1,16 @@
 import re
 from unihandecode import Unihandecoder
 import unidecode
+#Investigate: https://github.com/3aransia/3aransia
 
 
 def transliterate_values(input_dict):
     #Latin-izes unicode values using the library unidecode
-    #Extract key value from input dict (argument)
+    #Each unicode decoder is created outside of the for loop to save on memory
+    #The object is passed to the unihandle_utf function along with the name that is changed if not found to be latin
     ch_decode, kr_decode, ja_decode = Unihandecoder(lang="zh"), Unihandecoder(lang="kr"), Unihandecoder(lang="ja")
+    #Extract key value from input dict (argument)
+    
     for k, v in input_dict.items():
         #Type should be list with dicts in, which we will loop over
         #print(type(v))
@@ -25,17 +29,16 @@ def transliterate_values(input_dict):
             elif k.lower() == "japanese":
                 sub_dict["name"] = unihande_utf(sub_dict["name"], ja_decode)
             else:
-                sub_dict["name"] = unidecode.unidecode_expect_nonascii(sub_dict["name"])
+                sub_dict["name"] = unidecode.unidecode_expect_nonascii(sub_dict["name"]).strip().replace(" ", "-")
+                #If not translateable by unihande, then use unidecode
+            #TODO: check arabic transliterations 
             # print(sub_dict)
         #After unidecode is done with iteration, reassign list to key in dictionary, use list comprehension to ensure no empty names after transliteration
         print("After the conversions ...")
         input_dict[k] = [i for i in v if not (i["name"] == "")]
 
         #current_dict = input_dict[k]
-    print(input_dict["french"])
-    print(input_dict["japanese"])
-
-    print()
+    return input_dict
 
 def unihande_utf(name_value, decoder):
     return decoder.decode(name_value).strip().replace(" ", "-")
