@@ -226,16 +226,21 @@ if __name__ == '__main__':
     # The BS4 code should read over the wikipedia entries, the wiktionary entries, and one other entry
     # Reads wikipedia into json or df object
     start = time.time()
-    new_data_needed = False
+    new_source_data_needed = False
     JSON_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"
+    CONVERSION_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json"
     #Remove me if you want to change the data aggregation system
     print(JSON_PATH)
-    if os.path.exists(JSON_PATH) and not new_data_needed:
+    if os.path.exists(JSON_PATH) and not new_source_data_needed:
         print()
         with open(JSON_PATH, encoding='utf-8') as f:
             output_values = json.load(f)
         print("Got to this stage!")
         latinized_values = transliterate_values(output_values)
+        if not os.path.exists(CONVERSION_PATH):
+            print("Creating name_collection_latin in DataCollections")
+            with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
+                json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
         print(latinized_values.keys())
         print(latinized_values["arabic"])
         pprint(latinized_values["persian"])
@@ -268,6 +273,9 @@ if __name__ == '__main__':
         with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
             json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
         latinized_values = transliterate_values(output_values)
+        print("Creating name_collection_latin in DataCollections")
+        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
+            json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
 
     
     print(f"Time taken to read targets ... {time.time() - start} ")
