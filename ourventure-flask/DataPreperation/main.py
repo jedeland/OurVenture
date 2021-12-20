@@ -258,7 +258,7 @@ if __name__ == '__main__':
         
         
         # print(female_list, "\n\n\n", male_list)
-
+        # TODO: implement mnultiprocessing here using pool and map tools
         female_vals = get_name_values("female" , female_list)
         male_vals = get_name_values("male", male_list)
         surname_vals = get_name_values("surname", surname_list)
