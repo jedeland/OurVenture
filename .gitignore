@@ -9,3 +9,4 @@ node_modules
 node_modules/*
 ourventure-flask/DataPreperation/DataCollections/name_collection_output.json
 ourventure-flask/DataPreperation/DataCollections/*.json
+ourventure-flask/DataPreperation/DataCollections/*.txt
