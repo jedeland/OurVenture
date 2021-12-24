@@ -23,8 +23,19 @@ def unzip_cities():
     print()
 
 def process_cities():
-    cities_csv = pd.read_csv("ourventure-flask/DataPreperation/DataCollections/cities5000.txt", delimiter="\t")
+    cities_csv = pd.read_csv(
+        "ourventure-flask/DataPreperation/DataCollections/cities5000.txt",
+         delimiter="\t",
+          names=["geonameid", "name", "asciiname", "alternatenames",
+          "latitude", "longitude", "feature class", "feature code", "country code", "cc2", 
+          "admin1 code", "admin2 code",
+          "admin3 code", "admin4 code", "population", "elevation", "dem", "timezone", "modification date"])
     print(cities_csv)
+    print(cities_csv.columns)
+    cities_csv.drop(["geoname_id", "latitude", 
+    "longitude", "feature class", "feature code", 
+    "admin1 code", "admin2 code", "admin3 code", 
+    "admin4 code", "modification date"])
 
 if __name__ == "__main__":
     unzip_cities()
