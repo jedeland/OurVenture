@@ -1,9 +1,11 @@
+from multiprocessing.context import Process
 from bs4 import BeautifulSoup
 import os
 import re
 import time
 from pprint import pprint
 import json
+import multiprocessing
 import requests
 import unidecode
 import unicodedata as ud
@@ -226,7 +228,7 @@ if __name__ == '__main__':
     # The BS4 code should read over the wikipedia entries, the wiktionary entries, and one other entry
     # Reads wikipedia into json or df object
     start = time.time()
-    new_source_data_needed = False
+    new_source_data_needed = True
     JSON_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"
     CONVERSION_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json"
     #Remove me if you want to change the data aggregation system
@@ -249,20 +251,35 @@ if __name__ == '__main__':
 
 
         # Reads name values and outputs a list
-        name_values = get_name_targets()
+        cores = multiprocessing.cpu_count()
+
+        with multiprocessing.Pool(cores//2) as p:
+            name_values = get_name_targets()
         
-        #Split list before for loop
-        female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
-        male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
-        surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
-        
-        
-        # print(female_list, "\n\n\n", male_list)
-        # TODO: implement mnultiprocessing here using pool and map tools
-        female_vals = get_name_values("female" , female_list)
-        male_vals = get_name_values("male", male_list)
-        surname_vals = get_name_values("surname", surname_list)
-        #TODO: add last names here
+            #Split list before for loop
+            female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
+            male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
+            surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
+            
+            
+            # print(female_list, "\n\n\n", male_list)
+            # TODO: implement mnultiprocessing here using pool and map tools
+            # female_vals = get_name_values("female" , female_list)
+            # male_vals = get_name_values("male", male_list)
+            # surname_vals = get_name_values("surname", surname_list)
+
+            #TODO: Split lists in half to increase to 6 processes, increasing effeciency in the process
+            female_vals = Process(target=get_name_values, args=("female", female_list, ))
+            male_vals = Process(target=get_name_values, args=("male", male_list, ))
+            surname_vals = Process(target=get_name_values, args=("surname", surname_list, ))
+            female_vals.start()
+            male_vals.start()
+            surname_vals.start()
+
+            female_vals.join()
+            male_vals.join()
+            surname_vals.join()
+            #TODO: add last names here
 
         #print(f"Time taken to read targets ... {time.time() - start} ")
         time.sleep(2)
