@@ -1,4 +1,5 @@
 from multiprocessing.context import Process
+from multiprocessing.queues import Queue
 from bs4 import BeautifulSoup
 import os
 import re
@@ -101,7 +102,7 @@ def read_targets(female, male, last_names):
     # print(combined_dict["spanish"])
     return combined_dict
     
-def get_name_values(gender_arg, list_arg):
+def get_name_values(gender_arg, list_arg, return_dict):
     name_data = {"name_values": {}}
     
     for val in list_arg:
@@ -128,6 +129,8 @@ def get_name_values(gender_arg, list_arg):
             configure_name_data(name_data, origin)
             print(f"Single page can be read!: {val}")
             assign_names(gender_arg, name_data, origin, section, val)
+    #Q.put(name_data)
+    return_dict["gender_arg"] = name_data
     return name_data 
 
 #Header text: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:77.0) Gecko/20100101 Firefox/77.0
@@ -250,36 +253,70 @@ if __name__ == '__main__':
     else:
 
 
-        # Reads name values and outputs a list
-        cores = multiprocessing.cpu_count()
-
-        with multiprocessing.Pool(cores//2) as p:
-            name_values = get_name_targets()
+        # Reads name values and outputs a list       
+        name_values = get_name_targets()
+    
+        #Split list before for loop
+        female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
+        male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
+        surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
         
-            #Split list before for loop
-            female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
-            male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
-            surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
-            
-            
-            # print(female_list, "\n\n\n", male_list)
-            # TODO: implement mnultiprocessing here using pool and map tools
-            # female_vals = get_name_values("female" , female_list)
-            # male_vals = get_name_values("male", male_list)
-            # surname_vals = get_name_values("surname", surname_list)
+        
+        # print(female_list, "\n\n\n", male_list)
+        # Old version
+        # female_vals = get_name_values("female" , female_list)
+        # male_vals = get_name_values("male", male_list)
+        # surname_vals = get_name_values("surname", surname_list)
 
-            #TODO: Split lists in half to increase to 6 processes, increasing effeciency in the process
-            female_vals = Process(target=get_name_values, args=("female", female_list, ))
-            male_vals = Process(target=get_name_values, args=("male", male_list, ))
-            surname_vals = Process(target=get_name_values, args=("surname", surname_list, ))
-            female_vals.start()
-            male_vals.start()
-            surname_vals.start()
+        #TODO: Split lists in half to increase to 6 processes, increasing effeciency in the process
+        # female_start, female_end = female_list[:len(female_list)//2], female_list[len(female_list)//2:]
+        # male_start, male_end = male_list[:len(male_list)//2], male_list[len(male_list)//2:]
+        # surname_start, surname_end = surname_list[:len(surname_list)//2], surname_list[len(surname_list)//2:]
 
-            female_vals.join()
-            male_vals.join()
-            surname_vals.join()
-            #TODO: add last names here
+        cores = multiprocessing.cpu_count()
+        manager = multiprocessing.Manager()
+        return_dict = manager.dict()
+
+        female_vals= Process(target= get_name_values, args=("female", female_list, return_dict), )
+        male_vals = Process(target= get_name_values, args=("male", male_list, return_dict), )
+        surname_vals = Process(target= get_name_values, args=("surname", surname_list, return_dict), )
+
+        female_vals.start()
+        male_vals.start()
+        surname_vals.start()
+
+        female_vals.join()
+        male_vals.join()
+        surname_vals.join()
+        #print(female_vals)
+
+        print(return_dict.keys())
+
+
+
+
+        # Q = multiprocessing.Queue()
+
+        # female_process = Process(target=get_name_values, args=("female", female_list, ))
+        # male_process = Process(target=get_name_values, args=("male", male_list, ))
+        # surname_process = Process(target=get_name_values, args=("surname", surname_list, ))
+
+        # female_process.start()
+        # male_process.start()
+        # surname_process.start()
+
+        # female_vals = Q.get()
+        # print(Q.get())
+        # female_process.join()#
+
+    
+        # male_vals = Q.get()
+        # male_process.join()
+
+    
+        # surname_vals = Q.get()
+        # surname_process.join()
+        # #TODO: add last names here
 
         #print(f"Time taken to read targets ... {time.time() - start} ")
         time.sleep(2)
