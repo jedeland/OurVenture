@@ -8,9 +8,10 @@ from pprint import pprint
 import json
 import multiprocessing
 import requests
-import unidecode
-import unicodedata as ud
+import numpy as np
 from translit_data import transliterate_values
+
+
 def get_name_targets():
     # This function reads wikipedia and wiktionary, it then looks for valid name categories (ones with more than 50 results) and passes them to a list.
     # This list is then returned to main, and added to the next function which reads every category for the names within
@@ -130,7 +131,7 @@ def get_name_values(gender_arg, list_arg, return_dict):
             print(f"Single page can be read!: {val}")
             assign_names(gender_arg, name_data, origin, section, val)
     #Q.put(name_data)
-    return_dict["gender_arg"] = name_data
+    return_dict[gender_arg] = name_data["name_values"]
     return name_data 
 
 #Header text: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:77.0) Gecko/20100101 Firefox/77.0
@@ -279,49 +280,39 @@ if __name__ == '__main__':
 
         female_vals= Process(target= get_name_values, args=("female", female_list, return_dict), )
         male_vals = Process(target= get_name_values, args=("male", male_list, return_dict), )
-        surname_vals = Process(target= get_name_values, args=("surname", surname_list, return_dict), )
+        surname_start = Process(target= get_name_values, args=("surname_start", list(np.array_split(surname_list, 4))[0], return_dict), )
+        surname_middle = Process(target= get_name_values, args=("surname_middle", list(np.array_split(surname_list, 4))[1], return_dict), )
+        surname_later = Process(target = get_name_values, args=("surname_later", list(np.array_split(surname_list, 4)) [2], return_dict), )
+        surname_end = Process(target= get_name_values, args=("surname_end", list(np.array_split(surname_list, 4))[3], return_dict), )
+        # surname_start = Process(target= get_name_values, args=("surname", surname_list, return_dict), )
 
         female_vals.start()
         male_vals.start()
-        surname_vals.start()
+        surname_start.start()
+        surname_middle.start()
+        surname_later.start()
+        surname_end.start()
 
         female_vals.join()
         male_vals.join()
-        surname_vals.join()
+        surname_start.join()
+        surname_middle.join()
+        surname_later.join()
+        surname_end.join()
         #print(female_vals)
 
         print(return_dict.keys())
-
-
-
-
-        # Q = multiprocessing.Queue()
-
-        # female_process = Process(target=get_name_values, args=("female", female_list, ))
-        # male_process = Process(target=get_name_values, args=("male", male_list, ))
-        # surname_process = Process(target=get_name_values, args=("surname", surname_list, ))
-
-        # female_process.start()
-        # male_process.start()
-        # surname_process.start()
-
-        # female_vals = Q.get()
-        # print(Q.get())
-        # female_process.join()#
-
-    
-        # male_vals = Q.get()
-        # male_process.join()
-
-    
-        # surname_vals = Q.get()
-        # surname_process.join()
-        # #TODO: add last names here
-
+        pprint(return_dict)
+        pprint(return_dict["surname_later"])
+        print(return_dict["surname_later"].keys())
+        print(f"Time taken to read targets ... {time.time() - start} ")
+        return_dict["surname"] = {**return_dict["surname_start"], **return_dict["surname_middle"], **return_dict["surname_later"], **return_dict["surname_end"]}
+        print(return_dict["surname"].keys())
+        #print(return_dict["surname"])
         #print(f"Time taken to read targets ... {time.time() - start} ")
         time.sleep(2)
         # Create json object, and combine dicts 
-        output_values = read_targets(female_vals, male_vals, surname_vals)
+        output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
         pprint(output_values["spanish"])
         
         with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
