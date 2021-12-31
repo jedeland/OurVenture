@@ -287,7 +287,7 @@ if __name__ == '__main__':
         male_vals.start()
         #TODO: create process the searches through english surnames that are divided in half
         surname_processes = []
-        decided_range = 8
+        decided_range = 9
         for i in range(decided_range):
             time.sleep(1)
             process = Process(target= get_name_values, args=(f"surname_{i+1}", list(np.array_split(surname_list, decided_range))[i], return_dict), )
@@ -299,61 +299,22 @@ if __name__ == '__main__':
         male_vals.join()
         for process in surname_processes:
             process.join()
-        # surname_1 = Process(target= get_name_values, args=("surname_1", list(np.array_split(surname_list, 6))[0], return_dict), )
-        # surname_2 = Process(target= get_name_values, args=("surname_2", list(np.array_split(surname_list, 6))[1], return_dict), )
-        # surname_3 = Process(target = get_name_values, args=("surname_3", list(np.array_split(surname_list, 6)) [2], return_dict), )
-        # surname_4 = Process(target= get_name_values, args=("surname_4", list(np.array_split(surname_list, 6))[3], return_dict), )
-        # surname_5 = Process(target= get_name_values, args=("surname_5", list(np.array_split(surname_list, 6))[4], return_dict), )
-        # surname_6 = Process(target= get_name_values, args=("surname_6", list(np.array_split(surname_list, 6))[5], return_dict), )
-        # surname_start = Process(target= get_name_values, args=("surname", surname_list, return_dict), )
 
-
-        # surname_1.start()
-        # surname_2.start()
-        # surname_3.start()
-        # surname_4.start()
-        # surname_5.start()
-        # surname_6.start()
-
-     
-        # surname_1.join()
-        # surname_2.join()
-        # surname_3.join()
-        # surname_4.join()
-        # surname_5.join()
-        # surname_6.join()
-        #print(female_vals)
-
-        # print(return_dict.keys())
-        # pprint(return_dict)
         print(f"Time taken to read targets ... {time.time() - start} ")
         #TODO: rework me, or not idk, it looks a bit ugly and doesnt scale with the process creation above
 
         return_dict["surname"] = {**return_dict["surname_1"], **return_dict["surname_2"], **return_dict["surname_3"],
                                      **return_dict["surname_4"], **return_dict["surname_5"] ,**return_dict["surname_6"],
-                                     **return_dict["surname_7"], **return_dict["surname_8"]}
-        #TODO: fix this!
-        
-        for dicts in return_dict:
-            dicts.update((k, "surname") for k, v in dicts.items() if "surname" in v)
-        print(return_dict["surname"])
-        #Double for loop to change surname_x values back to surname
-        # for k, v in return_dict["surname"].items():
-        #     print("For loop values: ", k, v)
-        #     for item in v:
-        #         print("Item ", item)
-        #         print(item.get("gender"))
-        #         print("Item update?")
-        #         if "surname" in item["gender"]:
-        #             print(item)
-        #             item.update({"gender": "surname"})
-        #             print(item)
-                
-        #     print(return_dict["surname"][k])
-                # item.update({key, "surname"} for key, value in item.items() if "surname" in value["gender"])
-        # print(return_dict["surname"].keys())
-        # print(return_dict["surname"]["name_values"].keys())
-        #return_dict["surname"] = {**return_dict["surname_start"], **return_dict["surname_middle"], **return_dict["surname_later"], **return_dict["surname_end"]}
+                                     **return_dict["surname_7"], **return_dict["surname_8"], **return_dict["surname_9"]}
+       
+        #Create shallow copy of return dict DictProxy, load into json object
+        json_string = json.dumps(return_dict.copy(), sort_keys=True, ensure_ascii=False, default=str)
+        #Remove all values that register with the first value (surname_{digit})
+        json_string = re.sub("surname_\d+", "surname", json_string)
+        return_dict = json.loads(json_string)
+
+        print(json_string)
+
         time.sleep(2)
         # Create json object, and combine dicts 
         output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
