@@ -69,23 +69,23 @@ def read_targets(female, male, last_names):
     print("Looping over values, combining dicts")
     # Init dict
     combined_dict = {}
-
-    # print(female["name_values"].keys(), male["name_values"].keys())
+    print("Getting keys")
+    print(female.keys(), male.keys(), last_names.keys())
     # Get values that dont exist in both lists, aka naughty values
-    outliers = set(list(female["name_values"].keys())) ^ set(list(male["name_values"].keys())) ^ set(list(last_names["name_values"].keys()))
+    outliers = set(list(female.keys())) ^ set(list(male.keys())) ^ set(list(last_names.keys()))
     print(outliers)
     print(len(outliers))
     print("_"*20 + "\n"*2)
-    print(sorted(list(female["name_values"].keys())))
+    print(sorted(list(female.keys())))
     print("_"*20 + "\n"*2)
-    print(sorted(list(male["name_values"].keys())))
+    print(sorted(list(male.keys())))
     print("_"*20 + "\n"*2)
-    print(sorted(list(last_names["name_values"].keys())))
+    print(sorted(list(last_names.keys())))
 
 
     # This line below looks very complicated, it first maps out a the lists into sets, this is then extracted using the * operator, the function set.intersection is then used
     # To find values that exist in all 3 sets, and this is then converted to a list which is stored in shared values
-    shared_values = list(set.intersection(*map(set, [list(female["name_values"].keys()), list(male["name_values"].keys()), list(last_names["name_values"].keys())])))
+    shared_values = list(set.intersection(*map(set, [list(female.keys()), list(male.keys()), list(last_names.keys())])))
     print(sorted(shared_values))
     print(len(shared_values))
     # if len(outliers) == 0:
@@ -98,7 +98,7 @@ def read_targets(female, male, last_names):
         # If x is in the naughty list, we skip it
         print(x)
         # Update the dictionary with a literal list using the * operator
-        combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x], *last_names["name_values"][x]]})
+        combined_dict.update({x: [*female[x], *male[x], *last_names[x]]})
     # print("Combined Dict!")                
     # print(combined_dict["spanish"])
     return combined_dict
@@ -117,7 +117,11 @@ def get_name_values(gender_arg, list_arg, return_dict):
         section = soup.find("div", {"id": "mw-pages"})
         if "next page" in section.text:
             #config name data checks if the dictionary needs to be reset for the key value (or initialised), or if no change is needed
-            configure_name_data(name_data, origin)
+            #Previously named configure_name_data, unpacked for performance reasons
+            if origin in name_data["name_values"].keys():
+                print("Name already exists, not overwriting past data")
+            else:
+                name_data["name_values"].update({origin: []})
             
             next_link = section.find("a", string="next page")
             print(val, next_link)
@@ -127,10 +131,13 @@ def get_name_values(gender_arg, list_arg, return_dict):
             recursive_search(gender_arg, name_data, val, origin, next_link)
                     
         else:
-            configure_name_data(name_data, origin)
+            #Previously named configure_name_data, unpacked for performance reasons
+            if origin in name_data["name_values"].keys():
+                print("Name already exists, not overwriting past data")
+            else:
+                name_data["name_values"].update({origin: []})
             print(f"Single page can be read!: {val}")
-            assign_names(gender_arg, name_data, origin, section, val)
-    #Q.put(name_data)
+            assign_names(gender_arg, name_data, origin, section, val) 
     return_dict[gender_arg] = name_data["name_values"]
     return name_data 
 
@@ -179,11 +186,6 @@ def recursive_search(gender_arg, name_data, val, origin, next_link):
                 assign_names(gender_arg, name_data, origin, new_page, last_url)
                     
 
-def configure_name_data(name_data, origin):
-    if origin in name_data["name_values"].keys():
-        print("Name already exists, not overwriting past data")
-    else:
-        name_data["name_values"].update({origin: []})
 
 def assign_names(gender_arg, name_data, origin, section, assigned_from):
     names = section.find_all("li")
@@ -280,40 +282,82 @@ if __name__ == '__main__':
 
         female_vals= Process(target= get_name_values, args=("female", female_list, return_dict), )
         male_vals = Process(target= get_name_values, args=("male", male_list, return_dict), )
-        surname_start = Process(target= get_name_values, args=("surname_start", list(np.array_split(surname_list, 4))[0], return_dict), )
-        surname_middle = Process(target= get_name_values, args=("surname_middle", list(np.array_split(surname_list, 4))[1], return_dict), )
-        surname_later = Process(target = get_name_values, args=("surname_later", list(np.array_split(surname_list, 4)) [2], return_dict), )
-        surname_end = Process(target= get_name_values, args=("surname_end", list(np.array_split(surname_list, 4))[3], return_dict), )
-        # surname_start = Process(target= get_name_values, args=("surname", surname_list, return_dict), )
 
         female_vals.start()
         male_vals.start()
-        surname_start.start()
-        surname_middle.start()
-        surname_later.start()
-        surname_end.start()
-
+        #TODO: create process the searches through english surnames that are divided in half
+        surname_processes = []
+        decided_range = 8
+        for i in range(decided_range):
+            time.sleep(1)
+            process = Process(target= get_name_values, args=(f"surname_{i+1}", list(np.array_split(surname_list, decided_range))[i], return_dict), )
+            surname_processes.append(process)
+            process.start()  
+        
+        
         female_vals.join()
         male_vals.join()
-        surname_start.join()
-        surname_middle.join()
-        surname_later.join()
-        surname_end.join()
+        for process in surname_processes:
+            process.join()
+        # surname_1 = Process(target= get_name_values, args=("surname_1", list(np.array_split(surname_list, 6))[0], return_dict), )
+        # surname_2 = Process(target= get_name_values, args=("surname_2", list(np.array_split(surname_list, 6))[1], return_dict), )
+        # surname_3 = Process(target = get_name_values, args=("surname_3", list(np.array_split(surname_list, 6)) [2], return_dict), )
+        # surname_4 = Process(target= get_name_values, args=("surname_4", list(np.array_split(surname_list, 6))[3], return_dict), )
+        # surname_5 = Process(target= get_name_values, args=("surname_5", list(np.array_split(surname_list, 6))[4], return_dict), )
+        # surname_6 = Process(target= get_name_values, args=("surname_6", list(np.array_split(surname_list, 6))[5], return_dict), )
+        # surname_start = Process(target= get_name_values, args=("surname", surname_list, return_dict), )
+
+
+        # surname_1.start()
+        # surname_2.start()
+        # surname_3.start()
+        # surname_4.start()
+        # surname_5.start()
+        # surname_6.start()
+
+     
+        # surname_1.join()
+        # surname_2.join()
+        # surname_3.join()
+        # surname_4.join()
+        # surname_5.join()
+        # surname_6.join()
         #print(female_vals)
 
-        print(return_dict.keys())
-        pprint(return_dict)
-        pprint(return_dict["surname_later"])
-        print(return_dict["surname_later"].keys())
+        # print(return_dict.keys())
+        # pprint(return_dict)
         print(f"Time taken to read targets ... {time.time() - start} ")
-        return_dict["surname"] = {**return_dict["surname_start"], **return_dict["surname_middle"], **return_dict["surname_later"], **return_dict["surname_end"]}
-        print(return_dict["surname"].keys())
-        #print(return_dict["surname"])
-        #print(f"Time taken to read targets ... {time.time() - start} ")
+        #TODO: rework me, or not idk, it looks a bit ugly and doesnt scale with the process creation above
+
+        return_dict["surname"] = {**return_dict["surname_1"], **return_dict["surname_2"], **return_dict["surname_3"],
+                                     **return_dict["surname_4"], **return_dict["surname_5"] ,**return_dict["surname_6"],
+                                     **return_dict["surname_7"], **return_dict["surname_8"]}
+        #TODO: fix this!
+        
+        for dicts in return_dict:
+            dicts.update((k, "surname") for k, v in dicts.items() if "surname" in v)
+        print(return_dict["surname"])
+        #Double for loop to change surname_x values back to surname
+        # for k, v in return_dict["surname"].items():
+        #     print("For loop values: ", k, v)
+        #     for item in v:
+        #         print("Item ", item)
+        #         print(item.get("gender"))
+        #         print("Item update?")
+        #         if "surname" in item["gender"]:
+        #             print(item)
+        #             item.update({"gender": "surname"})
+        #             print(item)
+                
+        #     print(return_dict["surname"][k])
+                # item.update({key, "surname"} for key, value in item.items() if "surname" in value["gender"])
+        # print(return_dict["surname"].keys())
+        # print(return_dict["surname"]["name_values"].keys())
+        #return_dict["surname"] = {**return_dict["surname_start"], **return_dict["surname_middle"], **return_dict["surname_later"], **return_dict["surname_end"]}
         time.sleep(2)
         # Create json object, and combine dicts 
         output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
-        pprint(output_values["spanish"])
+        # pprint(output_values["spanish"])
         
         with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
             json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
