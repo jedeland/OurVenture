@@ -316,7 +316,7 @@ if __name__ == '__main__':
         # Now compress the file
         if os.path.exists("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"):
             with zipfile.ZipFile("ourventure-flask/DataPreperation/DataCollections/name_collection_output.zip", "w",  zipfile.ZIP_DEFLATED) as zip:
-                zip.write("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json")
+                zip.write("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "name_collection_output.json")
         
         latinized_values = transliterate_values(output_values)
         print("Creating name_collection_latin in DataCollections")
