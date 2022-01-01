@@ -1,10 +1,11 @@
 from multiprocessing.context import Process
 from multiprocessing.queues import Queue
 from bs4 import BeautifulSoup
+import zipfile
+from pprint import pprint
 import os
 import re
 import time
-from pprint import pprint
 import json
 import multiprocessing
 import requests
@@ -264,19 +265,9 @@ if __name__ == '__main__':
         male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
         surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
         
-        
-        # print(female_list, "\n\n\n", male_list)
-        # Old version
-        # female_vals = get_name_values("female" , female_list)
-        # male_vals = get_name_values("male", male_list)
-        # surname_vals = get_name_values("surname", surname_list)
-
-        #TODO: Split lists in half to increase to 6 processes, increasing effeciency in the process
-        # female_start, female_end = female_list[:len(female_list)//2], female_list[len(female_list)//2:]
-        # male_start, male_end = male_list[:len(male_list)//2], male_list[len(male_list)//2:]
-        # surname_start, surname_end = surname_list[:len(surname_list)//2], surname_list[len(surname_list)//2:]
 
         cores = multiprocessing.cpu_count()
+        #Multiprocess manager allows for dict proxy
         manager = multiprocessing.Manager()
         return_dict = manager.dict()
 
@@ -319,9 +310,14 @@ if __name__ == '__main__':
         # Create json object, and combine dicts 
         output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
         # pprint(output_values["spanish"])
-        
+        # Write to first json file using output
         with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
             json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
+        # Now compress the file
+        if os.path.exists("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"):
+            with zipfile.ZipFile("ourventure-flask/DataPreperation/DataCollections/name_collection_output.zip", "w",  zipfile.ZIP_DEFLATED) as zip:
+                zip.write("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json")
+        
         latinized_values = transliterate_values(output_values)
         print("Creating name_collection_latin in DataCollections")
         with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
