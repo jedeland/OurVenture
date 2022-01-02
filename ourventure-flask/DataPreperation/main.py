@@ -1,12 +1,17 @@
-import sqlite3
+from multiprocessing.context import Process
+from multiprocessing.queues import Queue
 from bs4 import BeautifulSoup
+import zipfile
+from pprint import pprint
 import os
 import re
 import time
-from pprint import pprint
 import json
+import multiprocessing
 import requests
-from functools import cache
+import numpy as np
+from translit_data import transliterate_values
+
 
 def get_name_targets():
     # This function reads wikipedia and wiktionary, it then looks for valid name categories (ones with more than 50 results) and passes them to a list.
@@ -65,23 +70,23 @@ def read_targets(female, male, last_names):
     print("Looping over values, combining dicts")
     # Init dict
     combined_dict = {}
-
-    # print(female["name_values"].keys(), male["name_values"].keys())
+    print("Getting keys")
+    print(female.keys(), male.keys(), last_names.keys())
     # Get values that dont exist in both lists, aka naughty values
-    outliers = set(list(female["name_values"].keys())) ^ set(list(male["name_values"].keys())) ^ set(list(last_names["name_values"].keys()))
+    outliers = set(list(female.keys())) ^ set(list(male.keys())) ^ set(list(last_names.keys()))
     print(outliers)
     print(len(outliers))
     print("_"*20 + "\n"*2)
-    print(sorted(list(female["name_values"].keys())))
+    print(sorted(list(female.keys())))
     print("_"*20 + "\n"*2)
-    print(sorted(list(male["name_values"].keys())))
+    print(sorted(list(male.keys())))
     print("_"*20 + "\n"*2)
-    print(sorted(list(last_names["name_values"].keys())))
+    print(sorted(list(last_names.keys())))
 
 
     # This line below looks very complicated, it first maps out a the lists into sets, this is then extracted using the * operator, the function set.intersection is then used
     # To find values that exist in all 3 sets, and this is then converted to a list which is stored in shared values
-    shared_values = list(set.intersection(*map(set, [list(female["name_values"].keys()), list(male["name_values"].keys()), list(last_names["name_values"].keys())])))
+    shared_values = list(set.intersection(*map(set, [list(female.keys()), list(male.keys()), list(last_names.keys())])))
     print(sorted(shared_values))
     print(len(shared_values))
     # if len(outliers) == 0:
@@ -94,12 +99,12 @@ def read_targets(female, male, last_names):
         # If x is in the naughty list, we skip it
         print(x)
         # Update the dictionary with a literal list using the * operator
-        combined_dict.update({x: [*female["name_values"][x], *male["name_values"][x], *last_names["name_values"][x]]})
+        combined_dict.update({x: [*female[x], *male[x], *last_names[x]]})
     # print("Combined Dict!")                
     # print(combined_dict["spanish"])
     return combined_dict
     
-def get_name_values(gender_arg, list_arg):
+def get_name_values(gender_arg, list_arg, return_dict):
     name_data = {"name_values": {}}
     
     for val in list_arg:
@@ -113,7 +118,11 @@ def get_name_values(gender_arg, list_arg):
         section = soup.find("div", {"id": "mw-pages"})
         if "next page" in section.text:
             #config name data checks if the dictionary needs to be reset for the key value (or initialised), or if no change is needed
-            configure_name_data(name_data, origin)
+            #Previously named configure_name_data, unpacked for performance reasons
+            if origin in name_data["name_values"].keys():
+                print("Name already exists, not overwriting past data")
+            else:
+                name_data["name_values"].update({origin: []})
             
             next_link = section.find("a", string="next page")
             print(val, next_link)
@@ -123,9 +132,14 @@ def get_name_values(gender_arg, list_arg):
             recursive_search(gender_arg, name_data, val, origin, next_link)
                     
         else:
-            configure_name_data(name_data, origin)
+            #Previously named configure_name_data, unpacked for performance reasons
+            if origin in name_data["name_values"].keys():
+                print("Name already exists, not overwriting past data")
+            else:
+                name_data["name_values"].update({origin: []})
             print(f"Single page can be read!: {val}")
-            assign_names(gender_arg, name_data, origin, section, val)
+            assign_names(gender_arg, name_data, origin, section, val) 
+    return_dict[gender_arg] = name_data["name_values"]
     return name_data 
 
 #Header text: Mozilla/5.0 (Windows NT 10.0; WOW64; rv:77.0) Gecko/20100101 Firefox/77.0
@@ -173,11 +187,6 @@ def recursive_search(gender_arg, name_data, val, origin, next_link):
                 assign_names(gender_arg, name_data, origin, new_page, last_url)
                     
 
-def configure_name_data(name_data, origin):
-    if origin in name_data["name_values"].keys():
-        print("Name already exists, not overwriting past data")
-    else:
-        name_data["name_values"].update({origin: []})
 
 def assign_names(gender_arg, name_data, origin, section, assigned_from):
     names = section.find_all("li")
@@ -226,37 +235,93 @@ if __name__ == '__main__':
     # The BS4 code should read over the wikipedia entries, the wiktionary entries, and one other entry
     # Reads wikipedia into json or df object
     start = time.time()
-
+    new_source_data_needed = True
+    JSON_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"
+    CONVERSION_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json"
     #Remove me if you want to change the data aggregation system
-    if os.path.exists("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"):
+    print(JSON_PATH)
+    if os.path.exists(JSON_PATH) and not new_source_data_needed:
         print()
+        with open(JSON_PATH, encoding='utf-8') as f:
+            output_values = json.load(f)
+        print("Got to this stage!")
+        latinized_values = transliterate_values(output_values)
+        if not os.path.exists(CONVERSION_PATH):
+            print("Creating name_collection_latin in DataCollections")
+            with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
+                json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
+        print(latinized_values.keys())
+        print(latinized_values["arabic"])
+        pprint(latinized_values["persian"])
+
     else:
 
 
-        # Reads name values and outputs a list
+        # Reads name values and outputs a list       
         name_values = get_name_targets()
-        
+    
         #Split list before for loop
         female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
         male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
         surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
         
+
+        cores = multiprocessing.cpu_count()
+        #Multiprocess manager allows for dict proxy
+        manager = multiprocessing.Manager()
+        return_dict = manager.dict()
+
+        female_vals= Process(target= get_name_values, args=("female", female_list, return_dict), )
+        male_vals = Process(target= get_name_values, args=("male", male_list, return_dict), )
+
+        female_vals.start()
+        male_vals.start()
+        #TODO: create process the searches through english surnames that are divided in half
+        surname_processes = []
+        decided_range = 9
+        for i in range(decided_range):
+            time.sleep(1)
+            process = Process(target= get_name_values, args=(f"surname_{i+1}", list(np.array_split(surname_list, decided_range))[i], return_dict), )
+            surname_processes.append(process)
+            process.start()  
         
-        # print(female_list, "\n\n\n", male_list)
+        
+        female_vals.join()
+        male_vals.join()
+        for process in surname_processes:
+            process.join()
 
-        female_vals = get_name_values("female" , female_list)
-        male_vals = get_name_values("male", male_list)
-        surname_vals = get_name_values("surname", surname_list)
-        #TODO: add last names here
+        print(f"Time taken to read targets ... {time.time() - start} ")
+        #TODO: rework me, or not idk, it looks a bit ugly and doesnt scale with the process creation above
 
-        #print(f"Time taken to read targets ... {time.time() - start} ")
+        return_dict["surname"] = {**return_dict["surname_1"], **return_dict["surname_2"], **return_dict["surname_3"],
+                                     **return_dict["surname_4"], **return_dict["surname_5"] ,**return_dict["surname_6"],
+                                     **return_dict["surname_7"], **return_dict["surname_8"], **return_dict["surname_9"]}
+       
+        #Create shallow copy of return dict DictProxy, load into json object
+        json_string = json.dumps(return_dict.copy(), sort_keys=True, ensure_ascii=False, default=str)
+        #Remove all values that register with the first value (surname_{digit})
+        json_string = re.sub("surname_\d+", "surname", json_string)
+        return_dict = json.loads(json_string)
+
+        print(json_string)
+
         time.sleep(2)
         # Create json object, and combine dicts 
-        output_values = read_targets(female_vals, male_vals, surname_vals)
-        pprint(output_values["spanish"])
-        
+        output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
+        # pprint(output_values["spanish"])
+        # Write to first json file using output
         with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
             json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
+        # Now compress the file
+        if os.path.exists("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"):
+            with zipfile.ZipFile("ourventure-flask/DataPreperation/DataCollections/name_collection_output.zip", "w",  zipfile.ZIP_DEFLATED) as zip:
+                zip.write("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "name_collection_output.json")
+        
+        latinized_values = transliterate_values(output_values)
+        print("Creating name_collection_latin in DataCollections")
+        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
+            json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
 
     
-    print(f"Time taken to read targets ... {time.time() - start} ")    
+    print(f"Time taken to read targets ... {time.time() - start} ")
