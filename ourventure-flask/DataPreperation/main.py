@@ -1,3 +1,4 @@
+from errno import EILSEQ
 from multiprocessing.context import Process
 from multiprocessing.queues import Queue
 from bs4 import BeautifulSoup
@@ -112,7 +113,7 @@ def get_name_values(gender_arg, list_arg, return_dict):
         
         # print(f.split(":", 1)[-1])
         #TODO: Refactor me to look nicer
-        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("langauge_", "").replace("-language", "").split(":")[-1])[0]
+        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("low_").replace("langauge_", "").replace("-language", "").split(":")[-1])[0]
         print(origin.capitalize())
 
         section = soup.find("div", {"id": "mw-pages"})
@@ -190,10 +191,13 @@ def recursive_search(gender_arg, name_data, val, origin, next_link):
 
 def assign_names(gender_arg, name_data, origin, section, assigned_from):
     names = section.find_all("li")
+    scandinavia = ["faroese", "danish", "greenlandic", "swedish", "norweigan", "icelandic"]
     for name in names:
                 #print()
-        name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})  # "location": assigned_from})           
-
+        if origin in scandinavia:
+            name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": "scandinavian"})  # "location": assigned_from}) 
+        else:
+            name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})  # "location": assigned_from})
 def get_female_values(female_list):
     #TODO: get names from the soup followed in this list
     female_data = {"name_values": []}
