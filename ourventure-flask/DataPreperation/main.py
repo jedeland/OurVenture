@@ -1,6 +1,8 @@
+from ast import arg
 from errno import EILSEQ
 from multiprocessing.context import Process
 from multiprocessing.queues import Queue
+import string
 from bs4 import BeautifulSoup
 import zipfile
 from pprint import pprint
@@ -25,6 +27,7 @@ def get_name_targets():
     
     # List of viable links found in each URL page
     viable_links = []
+    url_dict = {}
     for url in urls:
         # Gets a HTML Object of the url for processing
         # Beatiful soup processes the html objects text value, allowing us to use BeatifulSoup class functions to search through it
@@ -56,16 +59,38 @@ def get_name_targets():
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
+                url_dict[get_name(i.a.text)] = final_text
             elif i.a.text.lower().split(" ")[0] in viable_links and max(sec) > 20:
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
+                url_dict[get_name(i.a.text)] = final_text
+            elif url != urls[0] and len(url_dict) > 0 and get_name(i.a.text) in url_dict.keys() and max(sec) > 10:
+                print("We found one")
+                final_text = start_text + i.a["href"]
+                # Add link text to viable_links list for processing later
+                viable_links.append(final_text)
+                url_dict[get_name(i.a.text)] = final_text
+            
+        
         print(viable_links[-1])
+    pprint(url_dict)
 
     # print("Example: ", viable_links[-3])        
     # Export end value to main function
     return viable_links
     
+
+def get_name(argument):
+    # assume argument is str
+    argument = argument.replace("Old","").replace("High", "").replace("-language", "")
+    argument = argument.strip().split()[0]
+    print(argument)
+    return argument
+
+
+
+
 def read_targets(female, male, last_names):
     # Dummy function
     print("Looping over values, combining dicts")
@@ -113,7 +138,7 @@ def get_name_values(gender_arg, list_arg, return_dict):
         
         # print(f.split(":", 1)[-1])
         #TODO: Refactor me to look nicer
-        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("low_").replace("langauge_", "").replace("-language", "").split(":")[-1])[0]
+        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("low_", "").replace("langauge_", "").replace("-language", "").split(":")[-1])[0]
         print(origin.capitalize())
 
         section = soup.find("div", {"id": "mw-pages"})
@@ -262,9 +287,11 @@ if __name__ == '__main__':
 
 
         # Reads name values and outputs a list       
+        print("Reading name values!")
         name_values = get_name_targets()
     
         #Split list before for loop
+        print(name_values)
         female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
         male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
         surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
