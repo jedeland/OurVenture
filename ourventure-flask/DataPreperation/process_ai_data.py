@@ -36,13 +36,24 @@ def identify_names(input_file_wiki):
     wiki_keys = input_file_wiki.keys()
     print(type(wiki_keys))
     print(wiki_keys)
-    wiki_keys_converted = coco.convert(names=wiki_keys, to="name_short")
-    print(wiki_keys_converted)
+    # Making value map for wiki_keys, assigning to "bins"
+    bin_data = input_file_wiki.copy()
+    print(bin_data.keys())
+    print(type(bin_data["albanian"]))
+    # print(new_wiki["albanian"])
+    bin_data = {"west_europe",
+     "east_europe", 
+     "middle_east", 
+     "africa", 
+     "east_asia", "south_asia", "india"}
+    ai_data_list = []
     for i in os.listdir(f"{os.getcwd()}\DataPreperation\AI_Data"):
-        print(i)
+        ai_data_list.append(i)
         if i.lower().split(".")[0] in input_file_wiki.keys() and i:
-            print(i)
-
+            # print(i)
+            pass
+    print(ai_data_list)
+    # Relevant names
 
 if __name__ == "__main__":
     unpack_files()
