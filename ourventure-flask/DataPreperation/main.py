@@ -2,7 +2,7 @@ from ast import arg
 from errno import EILSEQ
 from multiprocessing.context import Process
 from multiprocessing.queues import Queue
-import string
+from collections import defaultdict
 from bs4 import BeautifulSoup
 import zipfile
 from pprint import pprint
@@ -22,12 +22,12 @@ def get_name_targets():
     # https://en.wikipedia.org/wiki/Category:Feminine_given_names
     urls = ["https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language", 
     "https://en.wiktionary.org/w/index.php?title=Category:Male_given_names_by_language&subcatfrom=Rwanda-Rundi%0ARwanda-Rundi+male+given+names#mw-subcategories",
-    "https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language",
+    "https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language", "https://en.wikipedia.org/wiki/Category:Surnames_by_culture", 
     "https://en.wikipedia.org/wiki/Category:Surnames_by_language", "https://en.wiktionary.org/wiki/Category:Surnames_by_language"]
     
     # List of viable links found in each URL page
     viable_links = []
-    url_dict = {}
+    url_dict = defaultdict(list)
     for url in urls:
         # Gets a HTML Object of the url for processing
         # Beatiful soup processes the html objects text value, allowing us to use BeatifulSoup class functions to search through it
@@ -59,22 +59,32 @@ def get_name_targets():
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
-                url_dict[get_name(i.a.text)] = final_text
+                url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
             elif i.a.text.lower().split(" ")[0] in viable_links and max(sec) > 20:
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
-                url_dict[get_name(i.a.text)] = final_text
+                url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
             elif url != urls[0] and len(url_dict) > 0 and get_name(i.a.text) in url_dict.keys() and max(sec) > 10:
-                print("We found one")
+                # print("We found one")
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
-                url_dict[get_name(i.a.text)] = final_text
+                url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
+        
+        check_list = ["female", "male", "surnames"]
+        extra_list = ["feminine", "masculine", "surname"]
+        url_dict_copy = url_dict.copy()
+        for k, v in url_dict.items():
             
+            if all(check_list_string in str(v) for check_list_string in check_list) or all(check_list_string in str(v) for check_list_string in extra_list):
+                print(f"{k} is a valid collection")
+            else:
+                print(f"Issues found, {str(v)}")
+                del url_dict_copy[k]
         
         print(viable_links[-1])
-    pprint(url_dict)
+    pprint(url_dict_copy)
 
     # print("Example: ", viable_links[-3])        
     # Export end value to main function
@@ -83,9 +93,10 @@ def get_name_targets():
 
 def get_name(argument):
     # assume argument is str
-    argument = argument.replace("Old","").replace("High", "").replace("-language", "")
+    # print(argument)
+    argument = argument.replace("Old","").replace("High", "").replace("-language", "").replace("Proto", "").replace("Ancient", "")
     argument = argument.strip().split()[0]
-    print(argument)
+    # print(argument)
     return argument
 
 
