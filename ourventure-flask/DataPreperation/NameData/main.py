@@ -84,7 +84,9 @@ def get_name_targets():
                 del url_dict_copy[k]
         
         print(viable_links[-1])
-    pprint(url_dict_copy)
+    # pprint(url_dict_copy)
+    print(url_dict_copy.keys(), len(url_dict_copy.keys()))
+    time.sleep(10)
 
     # print("Example: ", viable_links[-3])        
     # Export end value to main function
@@ -149,7 +151,7 @@ def get_name_values(gender_arg, list_arg, return_dict):
         
         # print(f.split(":", 1)[-1])
         #TODO: Refactor me to look nicer
-        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("low_", "").replace("langauge_", "").replace("-language", "").split(":")[-1])[0]
+        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("low_", "").replace("langauge_", "").replace("-language", "").replace("ancient", "").split(":")[-1])[0]
         print(origin.capitalize())
 
         section = soup.find("div", {"id": "mw-pages"})
@@ -234,41 +236,6 @@ def assign_names(gender_arg, name_data, origin, section, assigned_from):
             name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": "scandinavian"})  # "location": assigned_from}) 
         else:
             name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})  # "location": assigned_from})
-def get_female_values(female_list):
-    #TODO: get names from the soup followed in this list
-    female_data = {"name_values": []}
-    test_data = {"name_values": {}}
-    for f in female_list:
-        soup = get_soup(f)
-        # print(f.split(":", 1)[-1])
-        #TODO: Refactor me to look nicer
-        origin = re.findall(r"^(.*?)_", f.lower().replace("old_", "").replace("high_", "").replace("langauge_", "").split(":")[-1])[0]
-        print(origin.capitalize())
-
-        section = soup.find("div", {"id": "mw-pages"})
-        if "next page" in section.text:
-            #TODO: add way to follow down the pages
-            links = section.find("a", string="next page")
-            print(links)
-        else:
-            if origin in test_data["name_values"].keys():
-                print("Name already exists, not overwriting past data")
-            else:
-                test_data["name_values"].update({origin: []})
-            print(f"Single page can be read!: {f}")
-            names = section.find_all("li")
-            for name in names:
-                #print()
-                test_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": "female", "origin": origin})
-                female_data["name_values"].append({"name": name.text.split(" ")[0], "gender": "female", "origin": origin})
-                
-            print(names[-1].text.split(" ")[0])
-
-                
-            print(type(names))
-    pprint(female_data)
-
-    return test_data
 
 
 if __name__ == '__main__':
@@ -288,7 +255,7 @@ if __name__ == '__main__':
         latinized_values = transliterate_values(output_values)
         if not os.path.exists(CONVERSION_PATH):
             print("Creating name_collection_latin in DataCollections")
-            with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
+            with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w", encoding="utf-8") as fi:
                 json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
         print(latinized_values.keys())
         print(latinized_values["arabic"])
@@ -351,9 +318,10 @@ if __name__ == '__main__':
         time.sleep(2)
         # Create json object, and combine dicts 
         output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
+        # TODO: add way to bin targets, aka when value is origin = basque, then region should be iberia, or origin = algeria, region is north africa, some of these can be shared
         # pprint(output_values["spanish"])
         # Write to first json file using output
-        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
+        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w", encoding="utf-8") as f:
             json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
         # Now compress the file
         if os.path.exists("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"):
@@ -362,7 +330,7 @@ if __name__ == '__main__':
         
         latinized_values = transliterate_values(output_values)
         print("Creating name_collection_latin in DataCollections")
-        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
+        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w", encoding="utf-8") as fi:
             json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
 
     
