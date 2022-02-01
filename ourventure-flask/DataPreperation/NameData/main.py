@@ -282,7 +282,7 @@ if __name__ == '__main__':
 
         female_vals= Process(target= get_name_values, args=("female", female_list, return_dict), )
         male_vals = Process(target= get_name_values, args=("male", male_list, return_dict), )
-
+        #Start all
         female_vals.start()
         male_vals.start()
         #TODO: create process the searches through english surnames that are divided in half
@@ -294,7 +294,7 @@ if __name__ == '__main__':
             surname_processes.append(process)
             process.start()  
         
-        
+        #All existing processes (11 of them in total currently) are combined
         female_vals.join()
         male_vals.join()
         for process in surname_processes:
@@ -302,6 +302,8 @@ if __name__ == '__main__':
 
         print(f"Time taken to read targets ... {time.time() - start} ")
         #TODO: rework me, or not idk, it looks a bit ugly and doesnt scale with the process creation above
+
+        # return_dict["surname"]  = dict([**return_dict[f"surname_{i}"] for i in range(decided_range)])
 
         return_dict["surname"] = {**return_dict["surname_1"], **return_dict["surname_2"], **return_dict["surname_3"],
                                      **return_dict["surname_4"], **return_dict["surname_5"] ,**return_dict["surname_6"],
