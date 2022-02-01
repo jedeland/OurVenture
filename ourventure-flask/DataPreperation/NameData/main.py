@@ -1,5 +1,8 @@
+from ast import arg
+from errno import EILSEQ
 from multiprocessing.context import Process
 from multiprocessing.queues import Queue
+from collections import defaultdict
 from bs4 import BeautifulSoup
 import zipfile
 from pprint import pprint
@@ -19,11 +22,12 @@ def get_name_targets():
     # https://en.wikipedia.org/wiki/Category:Feminine_given_names
     urls = ["https://en.wikipedia.org/wiki/Category:Masculine_given_names", "https://en.wiktionary.org/wiki/Category:Male_given_names_by_language", 
     "https://en.wiktionary.org/w/index.php?title=Category:Male_given_names_by_language&subcatfrom=Rwanda-Rundi%0ARwanda-Rundi+male+given+names#mw-subcategories",
-    "https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language",
+    "https://en.wikipedia.org/wiki/Category:Feminine_given_names", "https://en.wiktionary.org/wiki/Category:Female_given_names_by_language", "https://en.wikipedia.org/wiki/Category:Surnames_by_culture", 
     "https://en.wikipedia.org/wiki/Category:Surnames_by_language", "https://en.wiktionary.org/wiki/Category:Surnames_by_language"]
     
     # List of viable links found in each URL page
     viable_links = []
+    url_dict = defaultdict(list)
     for url in urls:
         # Gets a HTML Object of the url for processing
         # Beatiful soup processes the html objects text value, allowing us to use BeatifulSoup class functions to search through it
@@ -55,16 +59,51 @@ def get_name_targets():
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
+                url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
             elif i.a.text.lower().split(" ")[0] in viable_links and max(sec) > 20:
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
                 viable_links.append(final_text)
+                url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
+            elif url != urls[0] and len(url_dict) > 0 and get_name(i.a.text) in url_dict.keys() and max(sec) > 10:
+                # print("We found one")
+                final_text = start_text + i.a["href"]
+                # Add link text to viable_links list for processing later
+                viable_links.append(final_text)
+                url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
+        
+        check_list = ["female", "male", "surnames"]
+        extra_list = ["feminine", "masculine", "surname"]
+        url_dict_copy = url_dict.copy()
+        for k, v in url_dict.items():
+            
+            if all(check_list_string in str(v) for check_list_string in check_list) or all(check_list_string in str(v) for check_list_string in extra_list):
+                print(f"{k} is a valid collection")
+            else:
+                print(f"Issues found, {str(v)}")
+                del url_dict_copy[k]
+        
         print(viable_links[-1])
+    # pprint(url_dict_copy)
+    print(url_dict_copy.keys(), len(url_dict_copy.keys()))
+    time.sleep(10)
 
     # print("Example: ", viable_links[-3])        
     # Export end value to main function
     return viable_links
     
+
+def get_name(argument):
+    # assume argument is str
+    # print(argument)
+    argument = argument.replace("Old","").replace("High", "").replace("-language", "").replace("Proto", "").replace("Ancient", "")
+    argument = argument.strip().split()[0]
+    # print(argument)
+    return argument
+
+
+
+
 def read_targets(female, male, last_names):
     # Dummy function
     print("Looping over values, combining dicts")
@@ -112,7 +151,7 @@ def get_name_values(gender_arg, list_arg, return_dict):
         
         # print(f.split(":", 1)[-1])
         #TODO: Refactor me to look nicer
-        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("langauge_", "").replace("-language", "").split(":")[-1])[0]
+        origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("low_", "").replace("langauge_", "").replace("-language", "").replace("ancient", "").split(":")[-1])[0]
         print(origin.capitalize())
 
         section = soup.find("div", {"id": "mw-pages"})
@@ -190,45 +229,13 @@ def recursive_search(gender_arg, name_data, val, origin, next_link):
 
 def assign_names(gender_arg, name_data, origin, section, assigned_from):
     names = section.find_all("li")
+    scandinavia = ["faroese", "danish", "greenlandic", "swedish", "norweigan", "icelandic"]
     for name in names:
                 #print()
-        name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})  # "location": assigned_from})           
-
-def get_female_values(female_list):
-    #TODO: get names from the soup followed in this list
-    female_data = {"name_values": []}
-    test_data = {"name_values": {}}
-    for f in female_list:
-        soup = get_soup(f)
-        # print(f.split(":", 1)[-1])
-        #TODO: Refactor me to look nicer
-        origin = re.findall(r"^(.*?)_", f.lower().replace("old_", "").replace("high_", "").replace("langauge_", "").split(":")[-1])[0]
-        print(origin.capitalize())
-
-        section = soup.find("div", {"id": "mw-pages"})
-        if "next page" in section.text:
-            #TODO: add way to follow down the pages
-            links = section.find("a", string="next page")
-            print(links)
+        if origin in scandinavia:
+            name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": "scandinavian"})  # "location": assigned_from}) 
         else:
-            if origin in test_data["name_values"].keys():
-                print("Name already exists, not overwriting past data")
-            else:
-                test_data["name_values"].update({origin: []})
-            print(f"Single page can be read!: {f}")
-            names = section.find_all("li")
-            for name in names:
-                #print()
-                test_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": "female", "origin": origin})
-                female_data["name_values"].append({"name": name.text.split(" ")[0], "gender": "female", "origin": origin})
-                
-            print(names[-1].text.split(" ")[0])
-
-                
-            print(type(names))
-    pprint(female_data)
-
-    return test_data
+            name_data["name_values"][origin].append({"name": name.text.split(" ")[0], "gender": gender_arg, "origin": origin})  # "location": assigned_from})
 
 
 if __name__ == '__main__':
@@ -248,7 +255,7 @@ if __name__ == '__main__':
         latinized_values = transliterate_values(output_values)
         if not os.path.exists(CONVERSION_PATH):
             print("Creating name_collection_latin in DataCollections")
-            with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
+            with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w", encoding="utf-8") as fi:
                 json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
         print(latinized_values.keys())
         print(latinized_values["arabic"])
@@ -258,9 +265,11 @@ if __name__ == '__main__':
 
 
         # Reads name values and outputs a list       
+        print("Reading name values!")
         name_values = get_name_targets()
     
         #Split list before for loop
+        print(name_values)
         female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
         male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
         surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
@@ -309,9 +318,10 @@ if __name__ == '__main__':
         time.sleep(2)
         # Create json object, and combine dicts 
         output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
+        # TODO: add way to bin targets, aka when value is origin = basque, then region should be iberia, or origin = algeria, region is north africa, some of these can be shared
         # pprint(output_values["spanish"])
         # Write to first json file using output
-        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w") as f:
+        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w", encoding="utf-8") as f:
             json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
         # Now compress the file
         if os.path.exists("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"):
@@ -320,7 +330,7 @@ if __name__ == '__main__':
         
         latinized_values = transliterate_values(output_values)
         print("Creating name_collection_latin in DataCollections")
-        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w") as fi:
+        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w", encoding="utf-8") as fi:
             json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
 
     

@@ -32,10 +32,10 @@ def process_cities():
           "admin3 code", "admin4 code", "population", "elevation", "dem", "timezone", "modification date"])
     print(cities_csv)
     print(cities_csv.columns)
-    cities_csv.drop(["geoname_id", "latitude", 
+    cities_csv.drop(["geonameid", "latitude", 
     "longitude", "feature class", "feature code", 
     "admin1 code", "admin2 code", "admin3 code", 
-    "admin4 code", "modification date"])
+    "admin4 code", "modification date"], axis=1, inplace=True)
 
 if __name__ == "__main__":
     unzip_cities()
