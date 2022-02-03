@@ -226,6 +226,9 @@ def recursive_search(gender_arg, name_data, val, origin, next_link):
                 assign_names(gender_arg, name_data, origin, new_page, last_url)
                     
 
+def add_region_bins(input_dict):
+    print()
+
 
 def assign_names(gender_arg, name_data, origin, section, assigned_from):
     names = section.find_all("li")
@@ -319,10 +322,12 @@ if __name__ == '__main__':
 
         time.sleep(2)
         # Create json object, and combine dicts 
+        add_region_bins(return_dict)
         output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
         # TODO: add way to bin targets, aka when value is origin = basque, then region should be iberia, or origin = algeria, region is north africa, some of these can be shared
         # pprint(output_values["spanish"])
         # Write to first json file using output
+        
         with open("ourventure-flask/DataPreperation/DataCollections/name_collection_output.json", "w", encoding="utf-8") as f:
             json.dump(output_values, f, sort_keys=True, ensure_ascii=False)
         # Now compress the file
