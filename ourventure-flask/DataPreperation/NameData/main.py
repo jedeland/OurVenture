@@ -12,8 +12,12 @@ import time
 import json
 import multiprocessing
 import requests
+import requests_cache
 import numpy as np
 from translit_data import transliterate_values
+
+
+requests_cache.install_cache('requests_cache')
 
 
 def get_name_targets():
@@ -58,35 +62,42 @@ def get_name_targets():
                 # Create url string using the start text and the link to the section
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
-                viable_links.append(final_text)
+                # viable_links.append(final_text)
                 url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
             elif i.a.text.lower().split(" ")[0] in viable_links and max(sec) > 20:
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
-                viable_links.append(final_text)
+                # viable_links.append(final_text)
                 url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
             elif url != urls[0] and len(url_dict) > 0 and get_name(i.a.text) in url_dict.keys() and max(sec) > 10:
                 # print("We found one")
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
-                viable_links.append(final_text)
+                # viable_links.append(final_text)
                 url_dict[get_name(i.a.text)].append(f"{final_text} {max(sec)}")
         
-        check_list = ["female", "male", "surnames"]
-        extra_list = ["feminine", "masculine", "surname"]
+        check_list = ["_female_", "_male_", "_surnames"]
+        extra_list = ["_feminine_", "_masculine_", "_surname"]
         url_dict_copy = url_dict.copy()
+        new_list = []
         for k, v in url_dict.items():
             
             if all(check_list_string in str(v) for check_list_string in check_list) or all(check_list_string in str(v) for check_list_string in extra_list):
                 print(f"{k} is a valid collection")
+                for val in v:
+                    if int(val.split()[1]) < 20000:
+                        new_list.append(val.split()[0])
+                    else:
+                        print(val)
             else:
                 print(f"Issues found, {str(v)}")
                 del url_dict_copy[k]
         
-        print(viable_links[-1])
     # pprint(url_dict_copy)
     print(url_dict_copy.keys(), len(url_dict_copy.keys()))
-    time.sleep(10)
+    pprint(new_list)
+    viable_links = new_list
+    time.sleep(1)
 
     # print("Example: ", viable_links[-3])        
     # Export end value to main function
@@ -152,19 +163,20 @@ def get_name_values(gender_arg, list_arg, return_dict):
         # print(f.split(":", 1)[-1])
         #TODO: Refactor me to look nicer
         origin = re.findall(r"^(.*?)_", val.lower().replace("old_", "").replace("high_", "").replace("low_", "").replace("langauge_", "").replace("-language", "").replace("ancient", "").split(":")[-1])[0]
-        print(origin.capitalize())
+        # print(origin.capitalize())
 
         section = soup.find("div", {"id": "mw-pages"})
         if "next page" in section.text:
             #config name data checks if the dictionary needs to be reset for the key value (or initialised), or if no change is needed
             #Previously named configure_name_data, unpacked for performance reasons
             if origin in name_data["name_values"].keys():
-                print("Name already exists, not overwriting past data")
+                # print("Name already exists, not overwriting past data")
+                pass
             else:
                 name_data["name_values"].update({origin: []})
             
             next_link = section.find("a", string="next page")
-            print(val, next_link)
+            # print(val, next_link)
             #Assign names function takes the current section and uses it to update the name_data dictionary
             assign_names(gender_arg, name_data, origin, section, val)
             #If a next page exists, recursive search is activates, this will search recursively until it find no more hyperlink on the "next page" value
@@ -173,10 +185,11 @@ def get_name_values(gender_arg, list_arg, return_dict):
         else:
             #Previously named configure_name_data, unpacked for performance reasons
             if origin in name_data["name_values"].keys():
-                print("Name already exists, not overwriting past data")
+                # print("Name already exists, not overwriting past data")
+                pass
             else:
                 name_data["name_values"].update({origin: []})
-            print(f"Single page can be read!: {val}")
+            # print(f"Single page can be read!: {val}")
             assign_names(gender_arg, name_data, origin, section, val) 
     return_dict[gender_arg] = name_data["name_values"]
     return name_data 
@@ -199,7 +212,7 @@ def get_recursive_soup(url, href_link):
     #href_link is changed to ensure that the ampersand: "&" is output correctly, currently it translates to "&amp"
     href_link = re.sub(r'&amp;', r'&', href_link)
     formed_url = f"{url.split('.org')[0]}.org{href_link}"
-    print(formed_url)
+    # print(formed_url)
     soup = get_soup(formed_url)
     section = soup.find("div", {"id": "mw-pages"})
     return section
@@ -228,6 +241,9 @@ def recursive_search(gender_arg, name_data, val, origin, next_link):
 
 def add_region_bins(input_dict):
     print()
+    #Okay so first we need to find the keys we have 
+    print(input_dict.keys())
+    # ini = input()
 
 
 def assign_names(gender_arg, name_data, origin, section, assigned_from):
@@ -249,7 +265,7 @@ if __name__ == '__main__':
     JSON_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_output.json"
     CONVERSION_PATH = "ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json"
     #Remove me if you want to change the data aggregation system
-    print(JSON_PATH)
+    # print(JSON_PATH)
     if os.path.exists(JSON_PATH) and not new_source_data_needed:
         print()
         with open(JSON_PATH, encoding='utf-8') as f:
@@ -311,19 +327,40 @@ if __name__ == '__main__':
         return_dict["surname"] = {**return_dict["surname_1"], **return_dict["surname_2"], **return_dict["surname_3"],
                                      **return_dict["surname_4"], **return_dict["surname_5"] ,**return_dict["surname_6"],
                                      **return_dict["surname_7"], **return_dict["surname_8"], **return_dict["surname_9"]}
-       
+        for i in range(decided_range):
+            del return_dict[f"surname_{i+1}"]
+        # print(return_dict.keys()) 
+        # print(return_dict["surname"].keys())
+        # print(return_dict["surname"].keys())
+        # print(return_dict["male"].keys())
+        # print(return_dict["female"].keys())
+        # print("Hmmm what happens to these keys ...")
+        #ini = input()
+        #TODO: fix this issue with the return_dict being changed for strange reasons
         #Create shallow copy of return dict DictProxy, load into json object
+        print(return_dict.keys())
         json_string = json.dumps(return_dict.copy(), sort_keys=True, ensure_ascii=False, default=str)
         #Remove all values that register with the first value (surname_{digit})
-        json_string = re.sub("surname_\d+", "surname", json_string)
+        # print("First batch")
+        # print(return_dict["surname"].keys())
+        # print(return_dict["male"].keys())
+        # print(return_dict["female"].keys())
+        json_string = re.sub('surname_[0-9]+', 'surname', json_string)
+        # print(json_string)
+        time.sleep(1)
         return_dict = json.loads(json_string)
+        # print("Seccond Batch")
+        # print(return_dict["surname"].keys())
+        # print(return_dict["male"].keys())
+        # print(return_dict["female"].keys())
 
-        print(json_string)
+        #print(json_string)
 
         time.sleep(2)
         # Create json object, and combine dicts 
-        add_region_bins(return_dict)
+        
         output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
+        add_region_bins(output_values)
         # TODO: add way to bin targets, aka when value is origin = basque, then region should be iberia, or origin = algeria, region is north africa, some of these can be shared
         # pprint(output_values["spanish"])
         # Write to first json file using output
