@@ -11,3 +11,5 @@ ourventure-flask/DataPreperation/DataCollections/name_collection_output.json
 ourventure-flask/DataPreperation/DataCollections/*.json
 ourventure-flask/DataPreperation/DataCollections/*.txt
 ourventure-flask/DataPreperation/AI_Data/*.csv
+requests_cache.sqlite
+**/requests_cache.sqlite

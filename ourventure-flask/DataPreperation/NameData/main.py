@@ -14,6 +14,7 @@ import multiprocessing
 import requests
 import requests_cache
 import numpy as np
+import process_bins
 from translit_data import transliterate_values
 
 
@@ -146,10 +147,11 @@ def read_targets(female, male, last_names):
     # else:
         # Loop over locations in female, as female has less values on wikipedia / wiktionary it should be smaller
     for x in shared_values:
+        if len(x) > 0:
         # If x is in the naughty list, we skip it
-        print(x)
-        # Update the dictionary with a literal list using the * operator
-        combined_dict.update({x: [*female[x], *male[x], *last_names[x]]})
+            print(x)
+            # Update the dictionary with a literal list using the * operator
+            combined_dict.update({x: [*female[x], *male[x], *last_names[x]]})
     # print("Combined Dict!")                
     # print(combined_dict["spanish"])
     return combined_dict
@@ -360,7 +362,7 @@ if __name__ == '__main__':
         # Create json object, and combine dicts 
         
         output_values = read_targets(return_dict["female"], return_dict["male"], return_dict["surname"])
-        add_region_bins(output_values)
+        output_values = process_bins.add_region_bins(output_values)
         # TODO: add way to bin targets, aka when value is origin = basque, then region should be iberia, or origin = algeria, region is north africa, some of these can be shared
         # pprint(output_values["spanish"])
         # Write to first json file using output
