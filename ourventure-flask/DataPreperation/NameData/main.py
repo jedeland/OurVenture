@@ -59,7 +59,7 @@ def get_name_targets():
             #     print(viable_links)
             # print(i.a.text.capitalize().split()[0] in viable_links)
             
-            if max(sec) > 55 and "unisex" not in i.a.text.lower():
+            if max(sec) > 50 and "unisex" not in i.a.text.lower():
                 # Create url string using the start text and the link to the section
                 final_text = start_text + i.a["href"]
                 # Add link text to viable_links list for processing later
@@ -95,8 +95,8 @@ def get_name_targets():
                 del url_dict_copy[k]
         
     # pprint(url_dict_copy)
-    print(url_dict_copy.keys(), len(url_dict_copy.keys()))
-    pprint(new_list)
+    # print(url_dict_copy.keys(), len(url_dict_copy.keys()))
+    # pprint(new_list)
     viable_links = new_list
     time.sleep(1)
 
@@ -290,7 +290,7 @@ if __name__ == '__main__':
         name_values = get_name_targets()
     
         #Split list before for loop
-        print(name_values)
+        # print(name_values)
         female_list = list(filter(lambda k: "_feminine_" in k.lower() or "_female_" in k.lower(), name_values))
         male_list = list(filter(lambda k: "_masculine_" in k.lower() or "_male_" in k.lower(), name_values))
         surname_list = list(filter(lambda k: "_surnames" in k.lower() or "_male_" in k.lower(), name_values))
@@ -376,8 +376,13 @@ if __name__ == '__main__':
         
         latinized_values = transliterate_values(output_values)
         print("Creating name_collection_latin in DataCollections")
-        with open("ourventure-flask/DataPreperation/DataCollections/name_collection_latin.json", "w", encoding="utf-8") as fi:
+        latin_path = "ourventure-flask/DataPreperation/DataCollections/name_collection_latin"
+        with open(f"{latin_path}.json", "w", encoding="utf-8") as fi:
             json.dump(latinized_values, fi, sort_keys=True, ensure_ascii=False)
+
+        if os.path.exists(f"{latin_path}.json"):
+            with zipfile.ZipFile(f"{latin_path}.zip", "w",  zipfile.ZIP_DEFLATED) as zip:
+                zip.write(f"{latin_path}.json", "name_collection_latin.json")
 
     
     print(f"Time taken to read targets ... {time.time() - start} ")
